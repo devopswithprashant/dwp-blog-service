@@ -81,9 +81,9 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<db.url>jdbc:postgresql://localhost:5432/myblogdb?serverTimezone=UTC</db.url>
-				<db.username>prashant</db.username>
-				<db.password>prashant</db.password>
+				<db.url>jdbc:postgresql://3.91.195.0:5432/devblogdb?serverTimezone=UTC</db.url>
+				<db.username>devuser</db.username>
+				<db.password>devuser</db.password>
 			</properties>
 		</profile>
 
@@ -91,11 +91,21 @@
 		<profile>
 			<id>test</id>
 			<properties>
-				<db.url>jdbc:postgresql://localhost:5432/testblogdb?serverTimezone=UTC</db.url>
+				<db.url>jdbc:postgresql://3.91.195.0:5432/testblogdb?serverTimezone=UTC</db.url>
 				<db.username>testuser</db.username>
 				<db.password>testuser</db.password>
 			</properties>
 		</profile>
+
+		<!-- Prod Profile -->
+		<!-- <profile>
+			<id>prod</id>
+			<properties>
+				<db.url>jdbc:postgresql://3.91.195.0:5432/myblogdb?serverTimezone=UTC</db.url>
+				<db.username>produser</db.username>
+				<db.password>produser</db.password>
+			</properties>
+		</profile> -->
 	</profiles>
 
 	<build>

@@ -1,0 +1,33 @@
+# Ignore target directory (Maven build output)
+target/
+
+# Ignore compiled class files
+*.class
+
+# Ignore packaged JAR/WAR files
+*.jar
+*.war
+
+# Ignore logs and temporary files
+.DS_Store
+logs/
+*.log
+hs_err_pid*
+
+# Ignore IntelliJ IDEA files
+.idea/
+*.iml
+*.iws
+out/
+
+# Ignore Eclipse files
+.classpath
+.project
+.settings/
+
+# Ignore VS Code files
+.vscode/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

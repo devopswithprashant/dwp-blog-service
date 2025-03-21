@@ -18,7 +18,7 @@
 
 stages:          # List of stages for jobs, and their order of execution
   - build
-  - test
+  #- test
   #- deploy
 
 
@@ -27,7 +27,7 @@ pre-build-job:       # This job runs in the build stage, which runs first.
   #image: maven:3.8.3-openjdk-17
   script:
     - echo "Compiling the code..."
-    #- mvn --version
+    - mvn --version
     - pwd
     - ls
     - echo "Compile complete."
@@ -35,23 +35,23 @@ pre-build-job:       # This job runs in the build stage, which runs first.
     - shell-build
 
 
-build-job:       # This job runs in the build stage, which runs first.
-  stage: build
-  image: maven:3.8.3-openjdk-17
-  script:
-    - echo "Compiling the code..."
-    - mvn --version
-    - pwd
-    - ls
-    - mvn clean package -DskipTests
-    - echo "Compile complete."
-  artifacts:
-    untracked: false
-    when: on_success
-    access: all
-    expire_in: 7 days
-    paths:
-      - "**/target/**.jar"
+# build-job:       # This job runs in the build stage, which runs first.
+#   stage: build
+#   image: maven:3.8.3-openjdk-17
+#   script:
+#     - echo "Compiling the code..."
+#     - mvn --version
+#     - pwd
+#     - ls
+#     - mvn clean package -DskipTests
+#     - echo "Compile complete."
+#   artifacts:
+#     untracked: false
+#     when: on_success
+#     access: all
+#     expire_in: 7 days
+#     paths:
+#       - "**/target/**.jar"
   #tags:
   #  - my-shell-runner
 

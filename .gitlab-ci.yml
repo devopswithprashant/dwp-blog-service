@@ -52,17 +52,20 @@ Maven Release:
   stage: release
   script:
     - echo "Releasing.."
-    
-    - git config --global user.email "devopswithprashant@gmail.com"
-    - git config --global user.name "devopswithprashant"
+
+    - git config user.email "devopswithprashant@gmail.com"
+    - git config user.name "devopswithprashant"
 
     - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
     - ReleaseTagName="v${ROJECT_VERSION}"
 
     - mvn release:clean
-    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
-    - mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
-  
+    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:perform -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+
+    - git config --unset user.email
+    - git config --unset user.name
+
   when: manual
   tags:
     - shell-build

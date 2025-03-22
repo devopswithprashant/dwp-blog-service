@@ -3,6 +3,7 @@
 stages:          
   - build
   - test
+  - publish
 
 
 
@@ -34,5 +35,12 @@ Maven Test:
 
 
 
+Maven Deploy:
+  stage: publish
+  script:
+    - echo "Publishing artifacts"
+    - mvn clean deploy -DskipTests
+  tags:
+   - shell-build
 
 

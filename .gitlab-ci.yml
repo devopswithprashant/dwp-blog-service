@@ -4,6 +4,7 @@ stages:
   - build
   - test
   - publish
+  - release
 
 
 
@@ -42,5 +43,36 @@ Maven Deploy:
     - mvn clean deploy -DskipTests
   tags:
    - shell-build
+
+
+
+
+
+Maven Release:
+  stage: release
+  script:
+    - echo "Releasing.."
+
+    - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
+    - ReleaseTagName="v${ROJECT_VERSION}"
+
+    - mvn release:clean
+    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+  
+  when: manual
+  tags:
+    - shell-build
+
+
+
+
+
+
+
+
+
+
+
 
 

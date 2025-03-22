@@ -6,12 +6,12 @@ stages:
 
 
 
-build-job:       # This job runs in the build stage, which runs first.
+Maven Build:       # This job runs in the build stage, which runs first.
   stage: build
   script:
-    - echo "Compiling & packaging the code..."
-    - mvn clean package -DskipTests
-    - echo "Compile & package complete."
+    - echo "Compiling, packaging & installing ..."
+    - mvn clean install -DskipTests
+    - echo "Compile, package & install in local m2 repo completes."
   artifacts:
     untracked: false
     when: on_success
@@ -23,68 +23,14 @@ build-job:       # This job runs in the build stage, which runs first.
    - shell-build
 
 
-unit-test-job:   
+
+Maven Test:   
   stage: test    
-  #image: maven:3.8.3-openjdk-17
   script:
-    - echo "Running unit tests... This will take about 60 seconds."
+    - echo "Running unit tests..."
     - mvn clean test -P test
   tags:
    - shell-build
 
 
 
-# pre-build-job:       # This job runs in the build stage, which runs first.
-#   stage: build
-#   #image: maven:3.8.3-openjdk-17
-#   script:
-#     - echo "Compiling the code..."
-#     - mvn --version
-#     - pwd
-#     - ls
-#     - echo "Compile complete."
-#   tags:
-#     - shell-build
-
-
-# build-job:       # This job runs in the build stage, which runs first.
-#   stage: build
-#   image: maven:3.8.3-openjdk-17
-#   script:
-#     - echo "Compiling the code..."
-#     - mvn --version
-#     - pwd
-#     - ls
-#     - mvn clean package -DskipTests
-#     - echo "Compile complete."
-#   artifacts:
-#     untracked: false
-#     when: on_success
-#     access: all
-#     expire_in: 7 days
-#     paths:
-#       - "**/target/**.jar"
-  #tags:
-  #  - my-shell-runner
-
-
-# unit-test-job:   # This job runs in the test stage.
-#   stage: test    # It only starts when the job in the build stage completes successfully.
-#   image: maven:3.8.3-openjdk-17
-#   script:
-#     - echo "Running unit tests... This will take about 60 seconds."
-#     - mvn clean test -P test
-
-# lint-test-job:   # This job also runs in the test stage.
-#   stage: test    # It can run at the same time as unit-test-job (in parallel).
-#   script:
-#     - echo "Linting code... This will take about 10 seconds."
-#     - sleep 10
-#     - echo "No lint issues found."
-
-# deploy-job:      # This job runs in the deploy stage.
-#   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
-#   environment: production
-#   script:
-#     - echo "Deploying application..."
-#     - echo "Application successfully deployed."

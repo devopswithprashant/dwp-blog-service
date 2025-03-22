@@ -52,6 +52,9 @@ Maven Release:
   stage: release
   script:
     - echo "Releasing.."
+    
+    - git config --global user.email "devopswithprashant@gmail.com"
+    - git config --global user.name "devopswithprashant"
 
     - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
     - ReleaseTagName="v${ROJECT_VERSION}"

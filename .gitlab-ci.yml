@@ -108,9 +108,11 @@ Maven Release:
     #   when: manual
     # Run on branches starting with RB_
     - if: '$CI_COMMIT_BRANCH =~ /^RB_/'
+      when: manual
     # Run on the default branch
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-    # ❌ Never run in any other cases
+      when: manual
+    # Never run in any other cases
     - when: never
   # tags:
   #   - shell-build

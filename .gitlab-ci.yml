@@ -1,4 +1,15 @@
 
+workflow:
+  rules:
+    # Skip pipeline if commit message matches Maven Release Plugin patterns
+    - if: $CI_COMMIT_MESSAGE =~ /\[maven-release-plugin\] prepare (release|for next development iteration)/
+      when: never
+    # Run pipelines for all other commits
+    - when: always
+
+
+
+
 
 stages:          
   - build
@@ -51,19 +62,22 @@ Maven Deploy:
 Maven Release:
   stage: release
   script:
-    - echo "Releasing.."
-
-    - git checkout -f origin/$CI_COMMIT_REF_NAME
+    - echo "Releasing Steps.."
 
     - git config user.email "devopswithprashant@gmail.com"
     - git config user.name "devopswithprashant"
 
+    - git checkout -B $CI_COMMIT_REF_NAME origin/$CI_COMMIT_REF_NAME  # Fixes detached HEAD
+    - git pull origin $CI_COMMIT_REF_NAME  # Ensure the branch is up-to-date
+    - git status
+
+
     - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
-    - ReleaseTagName="v${ROJECT_VERSION}"
+    - ReleaseTagName="v${PROJECT_VERSION}"
 
     - mvn release:clean
-    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
-    - mvn release:perform -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
 
     - git config --unset user.email
     - git config --unset user.name

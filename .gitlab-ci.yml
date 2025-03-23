@@ -1,48 +1,48 @@
 
 
 stages:          
-  - build
-  - test
-  - publish
+  # - build
+  # - test
+  # - publish
   - release
 
 
 
-Maven Build:       # This job runs in the build stage, which runs first.
-  stage: build
-  script:
-    - echo "Compiling, packaging & installing ..."
-    - mvn clean install -DskipTests
-    - echo "Compile, package & install in local m2 repo completes."
-  artifacts:
-    untracked: false
-    when: on_success
-    access: all
-    expire_in: 7 days
-    paths:
-      - "**/target/**.jar"
-  tags:
-   - shell-build
+# Maven Build:       # This job runs in the build stage, which runs first.
+#   stage: build
+#   script:
+#     - echo "Compiling, packaging & installing ..."
+#     - mvn clean install -DskipTests
+#     - echo "Compile, package & install in local m2 repo completes."
+#   artifacts:
+#     untracked: false
+#     when: on_success
+#     access: all
+#     expire_in: 7 days
+#     paths:
+#       - "**/target/**.jar"
+#   tags:
+#    - shell-build
 
 
 
-Maven Test:   
-  stage: test    
-  script:
-    - echo "Running unit tests..."
-    - mvn clean test -P test
-  tags:
-   - shell-build
+# Maven Test:   
+#   stage: test    
+#   script:
+#     - echo "Running unit tests..."
+#     - mvn clean test -P test
+#   tags:
+#    - shell-build
 
 
 
-Maven Deploy:
-  stage: publish
-  script:
-    - echo "Publishing artifacts"
-    - mvn clean deploy -DskipTests
-  tags:
-   - shell-build
+# Maven Deploy:
+#   stage: publish
+#   script:
+#     - echo "Publishing artifacts"
+#     - mvn clean deploy -DskipTests
+#   tags:
+#    - shell-build
 
 
 
@@ -53,17 +53,22 @@ Maven Release:
   script:
     - echo "Releasing.."
 
-    - git checkout -f origin/$CI_COMMIT_REF_NAME
-
     - git config user.email "devopswithprashant@gmail.com"
     - git config user.name "devopswithprashant"
+    - git checkout -B $CI_COMMIT_REF_NAME origin/$CI_COMMIT_REF_NAME  # Fixes detached HEAD
+    - git pull origin $CI_COMMIT_REF_NAME  # Ensure the branch is up-to-date
+    - git status
 
     - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
-    - ReleaseTagName="v${ROJECT_VERSION}"
+    - echo "PROJECT_VERSION= $PROJECT_VERSION"
+    - ReleaseTagName="v${PROJECT_VERSION}"
+    - echo "ReleaseTagName= $ReleaseTagName"
 
-    - mvn release:clean
-    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
-    - mvn release:perform -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+
+
+    #- mvn release:clean
+    #- mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    #- mvn release:perform -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
 
     - git config --unset user.email
     - git config --unset user.name

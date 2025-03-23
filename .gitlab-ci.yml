@@ -73,11 +73,9 @@ Maven Release:
     - ReleaseTagName="v${PROJECT_VERSION}"
     - echo "ReleaseTagName= $ReleaseTagName"
 
-
-
     - mvn release:clean
     - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
-    #- mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
 
     - git config --unset user.email
     - git config --unset user.name

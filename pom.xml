@@ -81,9 +81,9 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<db.url>jdbc:postgresql://3.91.195.0:5432/devblogdb?serverTimezone=UTC</db.url>
-				<db.username>devuser</db.username>
-				<db.password>devuser</db.password>
+				<db.url>${env.DEV_DB_URL}</db.url>
+      			<db.username>${env.DEV_DB_USER}</db.username>
+      			<db.password>${env.DEV_DB_PASS}</db.password>
 			</properties>
 		</profile>
 
@@ -91,9 +91,9 @@
 		<profile>
 			<id>test</id>
 			<properties>
-				<db.url>jdbc:postgresql://3.91.195.0:5432/testblogdb?serverTimezone=UTC</db.url>
-				<db.username>testuser</db.username>
-				<db.password>testuser</db.password>
+				<db.url>${env.TEST_DB_URL}</db.url>
+      			<db.username>${env.TEST_DB_USER}</db.username>
+      			<db.password>${env.TEST_DB_PASS}</db.password>
 			</properties>
 		</profile>
 
@@ -101,9 +101,9 @@
 		<profile>
 			<id>prod</id>
 			<properties>
-				<db.url>jdbc:postgresql://3.91.195.0:5432/myblogdb?serverTimezone=UTC</db.url>
-				<db.username>produser</db.username>
-				<db.password>produser</db.password>
+				<db.url>${env.PROD_DB_URL}</db.url>
+      			<db.username>${env.PROD_DB_USER}</db.username>
+      			<db.password>${env.PROD_DB_PASS}</db.password>
 			</properties>
 		</profile>
 	</profiles>

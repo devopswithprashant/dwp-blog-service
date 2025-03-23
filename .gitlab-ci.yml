@@ -88,8 +88,8 @@ Maven Release:
     - ReleaseTagName="v${PROJECT_VERSION}"
 
     - mvn release:clean
-    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
-    - mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=${GITLAB_PUSH_TOKEN} -Darguments=-DskipTests -P prod -B
+    - mvn release:perform -Dusername=devopswithprashant -Dpassword=${GITLAB_PUSH_TOKEN} -Darguments=-DskipTests -P prod -B
 
     - git config --unset user.email
     - git config --unset user.name

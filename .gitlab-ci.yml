@@ -4,6 +4,8 @@ workflow:
     # Skip pipeline if commit message matches Maven Release Plugin patterns
     - if: $CI_COMMIT_MESSAGE =~ /\[maven-release-plugin\] prepare (release|for next development iteration)/
       when: never
+    # Run pipelines for all other commits
+    - when: always
 
 
 

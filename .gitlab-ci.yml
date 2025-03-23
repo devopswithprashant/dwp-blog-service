@@ -1,0 +1,120 @@
+
+workflow:
+  rules:
+    # Skip pipeline if commit message matches Maven Release Plugin patterns
+    - if: $CI_COMMIT_MESSAGE =~ /\[maven-release-plugin\] prepare (release|for next development iteration)/
+      when: never
+    # Run pipelines for all other commits
+    - when: always
+
+
+
+
+
+stages:          
+  - build
+  - test
+  - publish
+  - release
+
+
+
+Maven Build:       # This job runs in the build stage, which runs first.
+  stage: build
+  script:
+    - echo "Compiling, packaging & installing ..."
+    - mvn clean install -DskipTests
+    - echo "Compile, package & install in local m2 repo completes."
+  artifacts:
+    untracked: false
+    when: on_success
+    access: all
+    expire_in: 7 days
+    paths:
+      - "**/target/**.jar"
+  tags:
+   - shell-build
+
+
+
+Maven Test:   
+  stage: test    
+  script:
+    - echo "Running unit tests..."
+    - mvn clean test -P test
+  rules:
+    # Do NOT run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    # Run on any branches
+    - if: '$CI_COMMIT_BRANCH'
+  tags:
+   - shell-build
+
+
+
+Maven Deploy:
+  stage: publish
+  script:
+    - echo "Publishing artifacts"
+    - mvn clean deploy -DskipTests
+  rules:
+    # Do NOT run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    # Run on any branches
+    - if: '$CI_COMMIT_BRANCH'
+  tags:
+   - shell-build
+
+
+
+
+
+Maven Release:
+  stage: release
+  script:
+    - echo "Releasing Steps.."
+
+    - git config user.email "devopswithprashant@gmail.com"
+    - git config user.name "devopswithprashant"
+
+    - git checkout -B $CI_COMMIT_REF_NAME origin/$CI_COMMIT_REF_NAME  # Fixes detached HEAD
+    - git pull origin $CI_COMMIT_REF_NAME  # Ensure the branch is up-to-date
+    - git status
+
+
+    - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
+    - ReleaseTagName="v${PROJECT_VERSION}"
+
+    - mvn release:clean
+    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+
+    - git config --unset user.email
+    - git config --unset user.name
+
+  #when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^RB_/'
+      when: manual
+    # Run on the default branch
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+    # Never run in any other cases
+    - when: never
+  tags:
+    - shell-build
+
+
+
+
+
+
+
+
+
+
+
+
+

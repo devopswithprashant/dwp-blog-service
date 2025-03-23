@@ -1,4 +1,11 @@
 
+workflow:
+  rules:
+    # Skip pipeline if commit message matches Maven Release Plugin patterns
+    - if: $CI_COMMIT_MESSAGE =~ /\[maven-release-plugin\] prepare (release|for next development iteration)/
+      when: never
+
+
 
 stages:          
   # - build
@@ -66,9 +73,9 @@ Maven Release:
 
 
 
-    #- mvn release:clean
-    #- mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
-    #- mvn release:perform -Dusername=oauth2 -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    - mvn release:clean
+    - mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
+    #- mvn release:perform -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B
 
     - git config --unset user.email
     - git config --unset user.name

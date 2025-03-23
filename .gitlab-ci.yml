@@ -80,10 +80,10 @@ Maven Release:
     - git pull origin $CI_COMMIT_REF_NAME  # Ensure the branch is up-to-date
     - git status
 
-    - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
-    - echo "PROJECT_VERSION= $PROJECT_VERSION"
-    - ReleaseTagName="v${PROJECT_VERSION}"
-    - echo "ReleaseTagName= $ReleaseTagName"
+    #- PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
+    #- echo "PROJECT_VERSION= $PROJECT_VERSION"
+    #- ReleaseTagName="v${PROJECT_VERSION}"
+    #- echo "ReleaseTagName= $ReleaseTagName"
 
     #- mvn release:clean
     #- mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=***REMOVED*** -Darguments=-DskipTests -P prod -B

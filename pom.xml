@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.3.0</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.devopswithprashant.api</groupId>
+	<artifactId>blog</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>blog</name>
+	<description>Project for backend api of springboot application of a blog website</description>
+
+
+
+	<distributionManagement>
+		<repository>
+			<id>myreleaserepo</id>
+			<url>http://54.163.26.247:8082/artifactory/myorg-release-local/</url>
+		</repository>
+		<snapshotRepository>
+			<id>mysnapshotrepo</id>
+			<url>http://54.163.26.247:8082/artifactory/myorg-snapshot-local/</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	
+	<scm>
+		<connection>scm:git:https://gitlab.com/my-first-group5031428/blog-backend-restapi.git</connection>
+		<developerConnection>scm:git:https://gitlab.com/my-first-group5031428/blog-backend-restapi.git</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+
+
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<profiles>
+		<profile>
+			<id>dev</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<!-- <db.url>jdbc:postgresql://18.233.9.161:5432/devblogdb?serverTimezone=UTC</db.url> -->
+				<db.url>jdbc:postgresql://localhost:5432/devblogdb?serverTimezone=UTC</db.url>
+				<db.username>devuser</db.username>
+				<db.password>devuser</db.password>
+			</properties>
+		</profile>
+
+		<!-- Testing Profile -->
+		<profile>
+			<id>test</id>
+			<properties>
+				<!-- <db.url>jdbc:postgresql://18.233.9.161:5432/testcaseblogdb?serverTimezone=UTC</db.url> -->
+				<db.url>jdbc:postgresql://localhost:5432/testcaseblogdb?serverTimezone=UTC</db.url>
+				<db.username>testcaseuser</db.username>
+				<db.password>testcaseuser</db.password>
+			</properties>
+		</profile>
+
+		<!-- Prod Profile -->
+		<!-- <profile>
+			<id>prod</id>
+			<properties>
+				<db.url>jdbc:postgresql://18.212.71.107:5432/myblogdb?serverTimezone=UTC</db.url>
+				<db.username>produser</db.username>
+				<db.password>produser</db.password>
+			</properties>
+		</profile> -->
+	</profiles>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.0</version>
+				<configuration>
+					<delimiters>
+					<delimiter>${*}</delimiter> <!-- Allow ${} syntax -->
+					</delimiters>
+				</configuration>
+			</plugin>
+		</plugins>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering> <!-- Critical: Enable filtering -->
+			</resource>
+		</resources>
+	</build>
+
+	
+
+</project>

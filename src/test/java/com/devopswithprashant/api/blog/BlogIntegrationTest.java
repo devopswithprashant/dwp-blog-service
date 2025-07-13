@@ -59,7 +59,7 @@ class BlogIntegrationTest {
 
     @Test
     void testGetAllBlogs() throws Exception {
-        mockMvc.perform(get("/blogs"))
+        mockMvc.perform(get("/api/v1/blogs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].title", is("First Blog")))
@@ -70,7 +70,7 @@ class BlogIntegrationTest {
     void testGetBlogById() throws Exception {
         Blog blog = blogService.getAllBlogs().get(0);
 
-        mockMvc.perform(get("/blogs/{id}", blog.getId()))
+        mockMvc.perform(get("/api/v1/blogs/{id}", blog.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title", is(blog.getTitle())))
                 .andExpect(jsonPath("$.content", is(blog.getContent())));
@@ -88,7 +88,7 @@ class BlogIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/blogs")
+        mockMvc.perform(post("/api/v1/blogs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(newBlogJson))
                 .andExpect(status().isOk())
@@ -103,7 +103,7 @@ class BlogIntegrationTest {
     void testDeleteBlog() throws Exception {
         Blog blog = blogService.getAllBlogs().get(0);
 
-        mockMvc.perform(delete("/blog/{id}", blog.getId()))
+        mockMvc.perform(delete("/api/v1/blog/{id}", blog.getId()))
                 .andExpect(status().isNoContent());
 
         // Verify that the blog is deleted from the database
@@ -112,7 +112,7 @@ class BlogIntegrationTest {
 
     @Test
     void testGetBlogById_NotFound() throws Exception {
-        mockMvc.perform(get("/blogs/{id}", 999))
+        mockMvc.perform(get("/api/v1/blogs/{id}", 999))
                 .andExpect(status().isNotFound());
     }
 }

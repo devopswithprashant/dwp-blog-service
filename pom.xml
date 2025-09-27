@@ -17,11 +17,11 @@
 	<distributionManagement>
 		<repository>
 			<id>myreleaserepo</id>
-			<url>http://54.163.26.247:8082/artifactory/myorg-release-local/</url>
+			<url>http://13.220.60.150:8082/artifactory/myorg-release-local/</url>
 		</repository>
 		<snapshotRepository>
 			<id>mysnapshotrepo</id>
-			<url>http://54.163.26.247:8082/artifactory/myorg-snapshot-local/</url>
+			<url>http://13.220.60.150:8082/artifactory/myorg-snapshot-local/</url>
 		</snapshotRepository>
 	</distributionManagement>
 
@@ -74,40 +74,39 @@
 	</dependencies>
 
 	<profiles>
+		<!-- Dev deploy Profile -->
 		<profile>
 			<id>dev</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
 			<properties>
-				<!-- <db.url>jdbc:postgresql://18.233.9.161:5432/devblogdb?serverTimezone=UTC</db.url> -->
 				<db.url>jdbc:postgresql://localhost:5432/devblogdb?serverTimezone=UTC</db.url>
 				<db.username>devuser</db.username>
 				<db.password>devuser</db.password>
 			</properties>
 		</profile>
 
-		<!-- Testing Profile -->
+		<!-- Local Testing Profile -->
 		<profile>
 			<id>test</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
 			<properties>
-				<!-- <db.url>jdbc:postgresql://18.233.9.161:5432/testcaseblogdb?serverTimezone=UTC</db.url> -->
 				<db.url>jdbc:postgresql://localhost:5432/testcaseblogdb?serverTimezone=UTC</db.url>
 				<db.username>testcaseuser</db.username>
 				<db.password>testcaseuser</db.password>
 			</properties>
 		</profile>
 
-		<!-- Prod Profile -->
+		<!-- CI Testing Profile -->
 		<profile>
-			<id>prod</id>
+			<id>citestcase</id>
 			<properties>
-				<!-- <db.url>jdbc:postgresql://localhost:5432/myblogdb?serverTimezone=UTC</db.url> -->
-				<db.url>jdbc:postgresql://blog-database-1.c2xkoy8ygth3.us-east-1.rds.amazonaws.com:5432/myblogdb?serverTimezone=UTC</db.url>
-				<db.username>bloguser</db.username>
-				<db.password>bloguser</db.password>
+				<db.url>jdbc:postgresql://nonprod-blog-database-1.c2xkoy8ygth3.us-east-1.rds.amazonaws.com:5432/unittestdb?serverTimezone=UTC</db.url>
+				<db.username>unittestuser</db.username>
+				<db.password>unittestuser</db.password>
 			</properties>
 		</profile>
+		
 	</profiles>
 
 	<build>
@@ -122,7 +121,7 @@
 				<version>3.3.0</version>
 				<configuration>
 					<delimiters>
-					<delimiter>${*}</delimiter> <!-- Allow ${} syntax -->
+					<delimiter>${*}</delimiter> 
 					</delimiters>
 				</configuration>
 			</plugin>
@@ -130,7 +129,7 @@
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
-				<filtering>true</filtering> <!-- Critical: Enable filtering -->
+				<filtering>true</filtering> 
 			</resource>
 		</resources>
 	</build>

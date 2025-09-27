@@ -1,0 +1,42 @@
+workflow:
+  rules:
+    # Skip pipeline if commit message matches Maven Release Plugin patterns
+    - if: $CI_COMMIT_MESSAGE =~ /\[maven-release-plugin\] prepare (release|for next development iteration)/
+      when: never
+    # Run pipelines for all other commits
+    - when: always
+
+
+stages:          
+  - build
+  - test
+  # - publish
+  # - release
+
+
+Maven Build:       # This job runs in the build stage, which runs first.
+  stage: build
+  script:
+    - echo "Compiling, packaging & installing ..."
+    - mvn clean install -DskipTests
+    - echo "Compile, package & install in local m2 repo completes."
+  tags:
+   - build
+
+
+
+Maven Test:   
+  stage: test    
+  script:
+    - echo "Running unit tests..."
+    - mvn clean test -P citestcase
+  rules:
+    # Do NOT run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    # Run on any branches
+    - if: '$CI_COMMIT_BRANCH'
+  tags:
+   - build
+
+

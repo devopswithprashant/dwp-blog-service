@@ -102,8 +102,8 @@
 			<id>citestcase</id>
 			<properties>
 				<db.url>jdbc:postgresql://nonprod-blog-database-1.c2xkoy8ygth3.us-east-1.rds.amazonaws.com:5432/unittestdb?serverTimezone=UTC</db.url>
-				<db.username>unittestuser</db.username>
-				<db.password>unittestuser</db.password>
+				<db.username>${env.UNITTEST_DB_USER}</db.username>
+				<db.password>${env.UNITTEST_DB_PASS}</db.password>
 			</properties>
 		</profile>
 		

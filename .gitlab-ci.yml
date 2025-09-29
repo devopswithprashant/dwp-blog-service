@@ -12,6 +12,7 @@ stages:
   - test
   - publish
   - release
+  - nonprod
 
 
 Maven Build:       # This job runs in the build stage, which runs first.
@@ -46,12 +47,17 @@ Maven Deploy:
   script:
     - echo "Publishing artifacts"
     - mvn clean deploy -DskipTests
+    - PROJECT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+    - echo "artifactVERSION=${PROJECT_VERSION}" > Versionvar.env
   rules:
     # Do NOT run on merge requests
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     # Run on any branches
     - if: '$CI_COMMIT_BRANCH'
+  artifacts:
+    reports:
+      dotenv: Versionvar.env
   tags:
    - build
 
@@ -73,12 +79,54 @@ Maven Release:
     - mvn release:perform -Dusername=devopswithprashant -Dpassword=${GITLAB_TOKEN} -Darguments=-DskipTests -B
     - git config --unset user.email
     - git config --unset user.name
+    - echo "artifactVERSION=${PROJECT_VERSION}" > Versionvar.env
   rules:
     # Run on the default branch
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     # Never run in any other cases
     - when: never
+  artifacts:
+    reports:
+      dotenv: Versionvar.env
   tags:
     - build
 
 
+
+# This job deploys the application to a server. But it will call a child pipeline from different project and pass variables to it.
+DEV Deploy:
+  stage: deploy
+  trigger:
+    project: my-first-group5031428/devops/environment-deployment
+    branch: main
+    strategy: depend
+    forward:
+      pipeline_variables: true
+    variables:
+      option: "DEPLOY"
+      deployEnvironment: "DEV"
+      artifactVersion: "$artifactVERSION"
+  rules:
+    # Do NOT run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    # Run on any branches
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
+
+
+
+
+# PROD Deploy:
+#   stage: deploy
+#   trigger:
+#     project: devopswithprashant/cicd-gitlab
+#     branch: main
+#     strategy: depend
+#     forward:
+#       pipeline_variables: true
+#   rules:
+#     # Run on the default branch
+#     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+#     # Never run in any other cases
+#     - when: never

@@ -13,6 +13,7 @@ stages:
   - publish
   - release
   - nonprod
+  - prod
 
 
 Maven Build:       # This job runs in the build stage, which runs first.
@@ -100,6 +101,7 @@ DEV:
     option: "DEPLOY"
     deployEnvironment: "DEV"
     artifactVersion: ${artifactVERSION}
+    agentTag: "nonprod"
   trigger:
     project: my-first-group5031428/devops/environment-deployment
     branch: main
@@ -121,6 +123,7 @@ QA:
     option: "DEPLOY"
     deployEnvironment: "QA"
     artifactVersion: ${artifactVERSION}
+    agentTag: "nonprod"
   trigger:
     project: my-first-group5031428/devops/environment-deployment
     branch: main
@@ -142,6 +145,7 @@ STAGE:
     option: "DEPLOY"
     deployEnvironment: "STAGE"
     artifactVersion: ${artifactVERSION}
+    agentTag: "nonprod"
   trigger:
     project: my-first-group5031428/devops/environment-deployment
     branch: main
@@ -157,16 +161,23 @@ STAGE:
       when: manual
 
 
-# PROD Deploy:
-#   stage: deploy
-#   trigger:
-#     project: devopswithprashant/cicd-gitlab
-#     branch: main
-#     strategy: depend
-#     forward:
-#       pipeline_variables: true
-#   rules:
-#     # Run on the default branch
-#     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-#     # Never run in any other cases
-#     - when: never
+
+PROD:
+  stage: prod
+  variables:
+    option: "DEPLOY"
+    deployEnvironment: "PROD"
+    artifactVersion: ${artifactVERSION}
+    agentTag: "prod"
+  trigger:
+    project: my-first-group5031428/devops/environment-deployment
+    branch: main
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    # Run on the default branch
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+    # Never run in any other cases
+    - when: never

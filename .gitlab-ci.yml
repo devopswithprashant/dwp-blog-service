@@ -94,18 +94,18 @@ Maven Release:
 
 
 # This job deploys the application to a server. But it will call a child pipeline from different project and pass variables to it.
-DEV Deploy:
+DEV:
   stage: nonprod
+  variables:
+    option: "DEPLOY"
+    deployEnvironment: "DEV"
+    artifactVersion: ${artifactVERSION}
   trigger:
     project: my-first-group5031428/devops/environment-deployment
     branch: main
     strategy: depend
     forward:
       pipeline_variables: true
-  variables:
-    option: "DEPLOY"
-    deployEnvironment: "DEV"
-    artifactVersion: ${artifactVERSION}
   rules:
     # Do NOT run on merge requests
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -115,6 +115,46 @@ DEV Deploy:
       when: manual
 
 
+QA:
+  stage: nonprod
+  variables:
+    option: "DEPLOY"
+    deployEnvironment: "QA"
+    artifactVersion: ${artifactVERSION}
+  trigger:
+    project: my-first-group5031428/devops/environment-deployment
+    branch: main
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    # Do NOT run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    # Run on any branches
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
+
+
+STAGE:
+  stage: nonprod
+  variables:
+    option: "DEPLOY"
+    deployEnvironment: "STAGE"
+    artifactVersion: ${artifactVERSION}
+  trigger:
+    project: my-first-group5031428/devops/environment-deployment
+    branch: main
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    # Do NOT run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    # Run on any branches
+    - if: '$CI_COMMIT_BRANCH'
+      when: manual
 
 
 # PROD Deploy:

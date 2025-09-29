@@ -114,7 +114,7 @@ DEV:
       when: never
     # Run on any branches
     - if: '$CI_COMMIT_BRANCH'
-      when: manual
+
 
 
 QA:
@@ -136,7 +136,7 @@ QA:
       when: never
     # Run on any branches
     - if: '$CI_COMMIT_BRANCH'
-      when: manual
+
 
 
 STAGE:

@@ -102,10 +102,10 @@ DEV Deploy:
     strategy: depend
     forward:
       pipeline_variables: true
-    variables:
-      option: "DEPLOY"
-      deployEnvironment: "DEV"
-      artifactVersion: "$artifactVERSION"
+  variables:
+    option: "DEPLOY"
+    deployEnvironment: "DEV"
+    artifactVersion: ${artifactVERSION}
   rules:
     # Do NOT run on merge requests
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

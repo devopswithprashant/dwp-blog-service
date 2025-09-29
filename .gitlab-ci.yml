@@ -95,7 +95,7 @@ Maven Release:
 
 # This job deploys the application to a server. But it will call a child pipeline from different project and pass variables to it.
 DEV Deploy:
-  stage: deploy
+  stage: nonprod
   trigger:
     project: my-first-group5031428/devops/environment-deployment
     branch: main

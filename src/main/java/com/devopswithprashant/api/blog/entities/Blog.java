@@ -11,7 +11,6 @@ public class Blog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    //@Column(name="book_id")
     @Column(name="blog_id")
     private int id;
 

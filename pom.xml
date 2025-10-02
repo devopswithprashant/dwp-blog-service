@@ -9,7 +9,7 @@
 	</parent>
 	<groupId>com.devopswithprashant.api</groupId>
 	<artifactId>blog</artifactId>
-	<version>0.0.7-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 	<name>blog</name>
 	<description>Project for backend api of springboot application of a blog website</description>
 
@@ -17,11 +17,11 @@
 	<distributionManagement>
 		<repository>
 			<id>myreleaserepo</id>
-			<url>http://54.237.199.211:8082/artifactory/myorg-release-local/</url>
+			<url>http://54.174.127.243:8082/artifactory/myorg-release-local/</url>
 		</repository>
 		<snapshotRepository>
 			<id>mysnapshotrepo</id>
-			<url>http://54.237.199.211:8082/artifactory/myorg-snapshot-local/</url>
+			<url>http://54.174.127.243:8082/artifactory/myorg-snapshot-local/</url>
 		</snapshotRepository>
 	</distributionManagement>
 

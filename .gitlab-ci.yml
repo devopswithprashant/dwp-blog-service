@@ -3,11 +3,6 @@ workflow:
     # Skip pipeline if commit message matches Maven Release Plugin patterns
     - if: $CI_COMMIT_MESSAGE =~ /\[maven-release-plugin\] prepare (release|for next development iteration)/
       when: never
-    # Always run the pipeline if any files other than README.md are changed.
-    - if: $CI_PIPELINE_SOURCE == "push"
-      changes:
-        - "README.md"
-      when: never
     - when: always
 
 

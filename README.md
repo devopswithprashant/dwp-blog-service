@@ -1,6 +1,6 @@
 # Spring Boot Blog REST API
 
-Follow the page for complete CI/CD pipeline & SDLC workflow. [visit here](https://gitlab.com/my-first-group5031428/blog-backend-restapi/-/wikis/Home)
+> Follow the separate documentation for complete CI/CD pipeline & SDLC workflow. [visit here](https://gitlab.com/my-first-group5031428/blog-backend-restapi/-/wikis/Home)
 
 ## Overview
 

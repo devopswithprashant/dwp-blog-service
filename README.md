@@ -91,3 +91,116 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+
+
+
+
+# Spring Boot Blog REST API
+
+## Overview
+
+This project is a Spring Boot-based RESTful API designed to perform CRUD (Create, Read, Update, Delete) operations on blog posts. It serves as the backend for a blog application, providing endpoints that can be consumed by a frontend (such as a React app).
+
+
+## Architecture
+1. Framework: Spring Boot
+1. Language: Java
+1. Build Tool: Maven
+1. Database: (Configured in application.properties, typically PostgreSQL/MySQL)
+1. Pattern: Layered Architecture (Controller → Service → Repository → Entity)
+
+
+
+## Project Structure
+
+
+| Layer	      |    File       |	    Description             |
+|-------------|---------------|-----------------------------|
+| Controller Layer  |	BlogController.java |	Handles HTTP requests (GET, POST, PUT, DELETE) and exposes API endpoints for blog management. |
+| Service Layer	 | BlogService.java	 | Contains business logic; interacts with the repository to perform CRUD operations. |
+| Repository Layer | 	BlogRepository.java |	Extends Spring Data JPA’s JpaRepository to interact with the database. |
+| Entity Layer |	Blog.java  |	Represents the blog post table with fields like title, content, author, publish date, and last modified date. |
+| Configuration	| CorsConfig.java |	Enables CORS (Cross-Origin Resource Sharing) to allow frontend apps (like React) to call the API. |
+| Application Config	| application.properties |	Contains database credentials, server port, and other environment configurations. |
+
+
+
+
+## API Endpoints
+
+Method	Endpoint	Description
+GET	/api/blogs	Fetch all blog posts
+GET	/api/blogs/{id}	Fetch a specific blog post by ID
+POST	/api/blogs	Create a new blog post
+PUT	/api/blogs/{id}	Update an existing blog post
+DELETE	/api/blogs/{id}	Delete a blog post by ID
+
+Note: The CORS configuration allows requests from frontend applications hosted on a different origin.
+
+
+
+## Data Model
+
+Entity: Blog
+
+{
+  "id": Long,
+  "title": String,
+  "content": String,
+  "author": String,
+  "publishDate": LocalDateTime,
+  "lastModifiedDate": LocalDateTime
+}
+
+
+
+
+## Key Features
+	•	RESTful architecture following best practices
+	•	JPA and Hibernate integration for database operations
+	•	CORS enabled for cross-origin frontend communication
+	•	Modular and maintainable code with clear separation of concerns
+
+
+
+## Usage
+	1.	Clone the project
+	2.	Configure database in application.properties
+	3.	Run using:
+
+mvn spring-boot:run
+
+
+## Access API at:
+
+http://localhost:8080/api/blogs
+
+
+
+
+
+## Example API Call
+
+POST /api/blogs
+
+{
+  "title": "My First Blog Post",
+  "content": "This is an introductory post about Spring Boot.",
+  "author": "Prashant",
+  "publishDate": "2025-10-06T20:00:00",
+  "lastModifiedDate": "2025-10-06T20:00:00"
+}
+
+
+
+## Future Enhancements (Optional Notes)
+	•	Add pagination and sorting for blog listings
+	•	Implement user authentication (JWT/Spring Security)
+	•	Add search and filter functionality
+	•	Integrate Swagger UI for API documentation
+
+
+
+
+
+

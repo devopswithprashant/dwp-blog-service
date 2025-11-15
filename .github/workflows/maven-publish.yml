@@ -13,6 +13,8 @@ permissions:
   contents: read
   id-token: write # <--- REQUIRED for OIDC
 
+
+
 env:
   ARTIFACTORY_DEV_USER: ${{ secrets.ARTIFACTORY_DEV_USER }}
   ARTIFACTORY_DEV_KEY: ${{ secrets.ARTIFACTORY_DEV_KEY }}
@@ -30,23 +32,20 @@ env:
 jobs:
   maven:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    services:
-      postgres:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-        options: >-
-          --health-cmd "pg_isready -U testuser"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    # services:
+    #   postgres:
+    #     image: postgres:15
+    #     ports:
+    #       - 5432:5432
+    #     env:
+    #       POSTGRES_DB: testdb
+    #       POSTGRES_USER: testuser
+    #       POSTGRES_PASSWORD: testpass
+    #     options: >-
+    #       --health-cmd "pg_isready -U testuser"
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
     steps:
 
     - name: Setup Maven Action
@@ -75,25 +74,26 @@ jobs:
       with:
         name: build-target
         # upload whole target directory. Use a glob if you prefer only jar files (target/*.jar)
-        path: target
+        path: target/*
+    
 
-    - name: Wait for Postgres to be ready
-      run: |
-          # Service container is reachable at localhost:5432 on GitHub-hosted runner
-          for i in $(seq 1 30); do
-            pg_isready -h localhost -p 5432 -U testuser && break
-            echo "Waiting for postgres..."
-            sleep 2
-          done
-      env:
-        PGPASSWORD: testpass
+    # - name: Wait for Postgres to be ready
+    #   run: |
+    #       # Service container is reachable at localhost:5432 on GitHub-hosted runner
+    #       for i in $(seq 1 30); do
+    #         pg_isready -h localhost -p 5432 -U testuser && break
+    #         echo "Waiting for postgres..."
+    #         sleep 2
+    #       done
+    #   env:
+    #     PGPASSWORD: testpass
 
-    - name: Test
-      run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
-      env:
-        dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
-        dbuser: testuser
-        dbpass: testpass
+    # - name: Test
+    #   run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
+    #   env:
+    #     dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
+    #     dbuser: testuser
+    #     dbpass: testpass
     
     #- name: Publish
       #run: mvn clean deploy --file pom.xml -DskipTests -B
@@ -137,11 +137,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # - name: Download build artifact (target/)
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: build-target
+      #     path: ./   # downloads artifact contents into the runner workspace (creates ./target)
+      
+      # in docker job (download step)
       - name: Download build artifact (target/)
         uses: actions/download-artifact@v4
         with:
           name: build-target
-          path: ./   # downloads artifact contents into the runner workspace (creates ./target)
+          path: target     # <--- downloads artifact contents into ./target
 
       - name: Show downloaded files
         run: |

@@ -97,7 +97,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
-
+    needs: maven
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -106,7 +106,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: $ECR_PUSH_ROLE   # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: github-actions-np-ecr
+          role-session-name: githubActionsforNPecr
           aws-region: ${{ env.AWS_REGION }}
 
       #- name: Ensure ECR repository exists

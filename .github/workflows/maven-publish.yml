@@ -34,6 +34,18 @@ jobs:
           java-version: 17
           java-distribution: 'temurin'
           maven-version: 3.9.11
+          settings-servers: |
+            [{
+              "id": "myreleaserepo",
+              "username": "testuser",
+              "password": "testuser"
+            },
+            {
+              "id": "mysnapshotrepo",
+              "username": "testuser",
+              "password": "testuser"
+            }]
+
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml -DskipTests

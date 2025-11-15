@@ -17,18 +17,18 @@
 	<distributionManagement>
 		<repository>
 			<id>myreleaserepo</id>
-			<url>http://52.200.234.237:8082/artifactory/myorg-release-local/</url>
+			<url>http://54.163.45.30:8082/artifactory/myorg-release-local/</url>
 		</repository>
 		<snapshotRepository>
 			<id>mysnapshotrepo</id>
-			<url>http://52.200.234.237:8082/artifactory/myorg-snapshot-local/</url>
+			<url>http://54.163.45.30:8082/artifactory/myorg-snapshot-local/</url>
 		</snapshotRepository>
 	</distributionManagement>
 
 	
 	<scm>
-		<connection>scm:git:https://gitlab.com/my-first-group5031428/blog-backend-restapi.git</connection>
-		<developerConnection>scm:git:https://gitlab.com/my-first-group5031428/blog-backend-restapi.git</developerConnection>
+		<connection>scm:git:https://github.com/devopswithprashant/dwp-blog-service.git</connection>
+		<developerConnection>scm:git:https://github.com/devopswithprashant/dwp-blog-service.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 

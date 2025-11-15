@@ -28,7 +28,22 @@ jobs:
     permissions:
       contents: read
       packages: write
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+        options: >-
+          --health-cmd pg_isready -U testuser
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
+
     - name: Setup Maven Action
       uses: s4u/setup-maven-action@v1.19.0
       with:
@@ -48,51 +63,69 @@ jobs:
             }]
 
     - name: Build
-      run: mvn -B package --file pom.xml -DskipTests
+      run: mvn clean package --file pom.xml -DskipTests -B
+
+    - name: Wait for Postgres to be ready
+      run: |
+          # Service container is reachable at localhost:5432 on GitHub-hosted runner
+          for i in $(seq 1 30); do
+            pg_isready -h localhost -p 5432 -U testuser && break
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+      env:
+        PGPASSWORD: testpass
+
+    - name: Test
+      run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
+      env:
+        dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
+        dbuser: testuser
+        dbpass: testpass
     
-    - name: Publish
-      run: mvn -B deploy --file pom.xml -DskipTests
+    #- name: Publish
+      #run: mvn clean deploy --file pom.xml -DskipTests -B
 
 
-  docker:
-    runs-on: ubuntu-latest
+  # docker:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v4
 
-      - name: Configure AWS credentials (assume role)
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}   # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: github-actions-ecr
-          aws-region: ${{ env.AWS_REGION }}
+  #     - name: Configure AWS credentials (assume role)
+  #       uses: aws-actions/configure-aws-credentials@v2
+  #       with:
+  #         role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}   # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+  #         role-session-name: github-actions-ecr
+  #         aws-region: ${{ env.AWS_REGION }}
 
-      - name: Ensure ECR repository exists
-        run: |
-          aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" >/dev/null 2>&1 || \
-            aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
-        # This uses the temporary credentials from configure-aws-credentials.
+  #     - name: Ensure ECR repository exists
+  #       run: |
+  #         aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" >/dev/null 2>&1 || \
+  #           aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
+  #       # This uses the temporary credentials from configure-aws-credentials.
 
-      - name: Log in to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
-        # amazon-ecr-login uses current AWS credentials and logs docker to ECR
+  #     - name: Log in to Amazon ECR
+  #       uses: aws-actions/amazon-ecr-login@v1
+  #       # amazon-ecr-login uses current AWS credentials and logs docker to ECR
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+  #     - name: Set up QEMU
+  #       uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
 
-      - name: Build and push to ECR
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          platforms: linux/amd64,linux/arm64
-          # Tags: both 'latest' and a commit-specific digest tag
-          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest,${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-          # Optional: use GitHub Actions cache for build layers (fast incremental builds)
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+  #     - name: Build and push to ECR
+  #       uses: docker/build-push-action@v6
+  #       with:
+  #         context: .
+  #         file: ./Dockerfile
+  #         push: true
+  #         platforms: linux/amd64,linux/arm64
+  #         # Tags: both 'latest' and a commit-specific digest tag
+  #         tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest,${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+  #         # Optional: use GitHub Actions cache for build layers (fast incremental builds)
+  #         cache-from: type=gha
+  #         cache-to: type=gha,mode=max

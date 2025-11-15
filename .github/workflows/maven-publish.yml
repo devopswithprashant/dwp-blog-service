@@ -16,8 +16,9 @@ env:
   ARTIFACTORY_RELEASE_KEY: ${{ secrets.ARTIFACTORY_RELEASE_KEY }}
   # Set defaults here or as repository/organization variables (recommended)
   AWS_REGION: us-east-1           # <- change to your region or set as repo variable
-  AWS_ACCOUNT_ID: 123456789012      # <- change to your AWS account id or set as repo var
-  ECR_REPOSITORY: my-app            # <- change to your ECR repository name
+  AWS_ACCOUNT_ID: 850756192530      # <- change to your AWS account id or set as repo var
+  ECR_REPOSITORY: dwp/np/blog            # <- change to your ECR repository name
+  ECR_PUSH_ROLE: ${{ secrets.AWS_ECR_NONPROD_PUSH_ROLE }}
 
 
 
@@ -64,6 +65,13 @@ jobs:
 
     - name: Build
       run: mvn clean package --file pom.xml -DskipTests -B
+    
+    - name: Upload build artifact (target/)
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-target
+        # upload whole target directory. Use a glob if you prefer only jar files (target/*.jar)
+        path: target
 
     - name: Wait for Postgres to be ready
       run: |
@@ -87,45 +95,65 @@ jobs:
       #run: mvn clean deploy --file pom.xml -DskipTests -B
 
 
-  # docker:
-  #   runs-on: ubuntu-latest
+  docker:
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout repo
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  #     - name: Configure AWS credentials (assume role)
-  #       uses: aws-actions/configure-aws-credentials@v2
-  #       with:
-  #         role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}   # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-  #         role-session-name: github-actions-ecr
-  #         aws-region: ${{ env.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: $ECR_PUSH_ROLE   # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: github-actions-np-ecr
+          aws-region: ${{ env.AWS_REGION }}
 
-  #     - name: Ensure ECR repository exists
-  #       run: |
-  #         aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" >/dev/null 2>&1 || \
-  #           aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
-  #       # This uses the temporary credentials from configure-aws-credentials.
+      #- name: Ensure ECR repository exists
+      #  run: |
+      #    aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" >/dev/null 2>&1 || \
+      #      aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
+        # This uses the temporary credentials from configure-aws-credentials.
 
-  #     - name: Log in to Amazon ECR
-  #       uses: aws-actions/amazon-ecr-login@v1
-  #       # amazon-ecr-login uses current AWS credentials and logs docker to ECR
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        # amazon-ecr-login uses current AWS credentials and logs docker to ECR
 
-  #     - name: Set up QEMU
-  #       uses: docker/setup-qemu-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-  #     - name: Build and push to ECR
-  #       uses: docker/build-push-action@v6
-  #       with:
-  #         context: .
-  #         file: ./Dockerfile
-  #         push: true
-  #         platforms: linux/amd64,linux/arm64
-  #         # Tags: both 'latest' and a commit-specific digest tag
-  #         tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest,${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-  #         # Optional: use GitHub Actions cache for build layers (fast incremental builds)
-  #         cache-from: type=gha
-  #         cache-to: type=gha,mode=max
+      - name: Download build artifact (target/)
+        uses: actions/download-artifact@v4
+        with:
+          name: build-target
+          path: ./   # downloads artifact contents into the runner workspace (creates ./target)
+
+      - name: Show downloaded files
+        run: |
+          echo "PWD: $(pwd)"
+          ls -la
+          ls -la target || true
+
+      # Optional: ensure the artifact exists before docker build
+      - name: Fail if artifact missing
+        run: |
+          if [ ! -d "target" ]; then
+            echo "target directory not found. Aborting."
+            exit 1
+          fi
+
+      - name: Build and push to ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          # Tags: both 'latest' and a commit-specific digest tag
+          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest,${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          # Optional: use GitHub Actions cache for build layers (fast incremental builds)
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

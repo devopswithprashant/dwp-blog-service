@@ -9,6 +9,10 @@ on:
   #release:
     #types: [created]
 
+permissions:
+  contents: read
+  id-token: write # <--- REQUIRED for OIDC
+
 env:
   ARTIFACTORY_DEV_USER: ${{ secrets.ARTIFACTORY_DEV_USER }}
   ARTIFACTORY_DEV_KEY: ${{ secrets.ARTIFACTORY_DEV_KEY }}

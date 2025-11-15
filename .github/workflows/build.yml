@@ -11,7 +11,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # <--- REQUIRED for OIDC
+  id-token: write 
 
 
 
@@ -33,7 +33,6 @@ env:
   AWS_REGION: us-east-1           # <- change to your region or set as repo variable
   AWS_ACCOUNT_ID: 850756192530      # <- change to your AWS account id or set as repo var
   ECR_REPOSITORY: dwp/np/blog            # <- change to your ECR repository name
-  #ECR_PUSH_ROLE: ${{ secrets.AWS_ECR_NONPROD_PUSH_ROLE }}
   GIT_USER_NAME: "ci-bot"
   GIT_USER_EMAIL: "ci-bot@devopswithprashant.com"
 

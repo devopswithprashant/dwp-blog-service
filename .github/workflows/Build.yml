@@ -1,0 +1,98 @@
+# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
+# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
+
+name: Maven Package
+
+on:
+  #push:
+  workflow_dispatch:
+  #release:
+    #types: [created]
+
+env:
+  ARTIFACTORY_DEV_USER: ${{ secrets.ARTIFACTORY_DEV_USER }}
+  ARTIFACTORY_DEV_KEY: ${{ secrets.ARTIFACTORY_DEV_KEY }}
+  ARTIFACTORY_RELEASE_USER: ${{ secrets.ARTIFACTORY_RELEASE_USER }}
+  ARTIFACTORY_RELEASE_KEY: ${{ secrets.ARTIFACTORY_RELEASE_KEY }}
+  # Set defaults here or as repository/organization variables (recommended)
+  AWS_REGION: us-east-1           # <- change to your region or set as repo variable
+  AWS_ACCOUNT_ID: 123456789012      # <- change to your AWS account id or set as repo var
+  ECR_REPOSITORY: my-app            # <- change to your ECR repository name
+
+
+
+
+jobs:
+  maven:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Setup Maven Action
+      uses: s4u/setup-maven-action@v1.19.0
+      with:
+          java-version: 17
+          java-distribution: 'temurin'
+          maven-version: 3.9.11
+          settings-servers: |
+            [{
+              "id": "myreleaserepo",
+              "username": "${env.ARTIFACTORY_RELEASE_USER}",
+              "password": "${env.ARTIFACTORY_RELEASE_KEY}"
+            },
+            {
+              "id": "mysnapshotrepo",
+              "username": "${env.ARTIFACTORY_DEV_USER}",
+              "password": "${env.ARTIFACTORY_DEV_KEY}"
+            }]
+
+    - name: Build
+      run: mvn -B package --file pom.xml -DskipTests
+    
+    - name: Publish
+      run: mvn -B deploy --file pom.xml -DskipTests
+
+
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (assume role)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}   # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: github-actions-ecr
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Ensure ECR repository exists
+        run: |
+          aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" >/dev/null 2>&1 || \
+            aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
+        # This uses the temporary credentials from configure-aws-credentials.
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        # amazon-ecr-login uses current AWS credentials and logs docker to ECR
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push to ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          # Tags: both 'latest' and a commit-specific digest tag
+          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest,${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          # Optional: use GitHub Actions cache for build layers (fast incremental builds)
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

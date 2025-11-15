@@ -32,20 +32,22 @@ env:
 jobs:
   maven:
     runs-on: ubuntu-latest
-    # services:
-    #   postgres:
-    #     image: postgres:15
-    #     ports:
-    #       - 5432:5432
-    #     env:
-    #       POSTGRES_DB: testdb
-    #       POSTGRES_USER: testuser
-    #       POSTGRES_PASSWORD: testpass
-    #     options: >-
-    #       --health-cmd "pg_isready -U testuser"
-    #       --health-interval 10s
-    #       --health-timeout 5s
-    #       --health-retries 5
+    outputs:
+      projectVersion: ${{ steps.project_version.outputs.version }}
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+        options: >-
+          --health-cmd "pg_isready -U testuser"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
 
     - name: Setup Maven Action
@@ -65,6 +67,12 @@ jobs:
               "username": "${env.ARTIFACTORY_DEV_USER}",
               "password": "${env.ARTIFACTORY_DEV_KEY}"
             }]
+    
+    - name: Get project version from POM
+      id: project_version
+      run: |
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Build
       run: mvn clean package --file pom.xml -DskipTests -B
@@ -77,23 +85,23 @@ jobs:
         path: target/*
     
 
-    # - name: Wait for Postgres to be ready
-    #   run: |
-    #       # Service container is reachable at localhost:5432 on GitHub-hosted runner
-    #       for i in $(seq 1 30); do
-    #         pg_isready -h localhost -p 5432 -U testuser && break
-    #         echo "Waiting for postgres..."
-    #         sleep 2
-    #       done
-    #   env:
-    #     PGPASSWORD: testpass
+    - name: Wait for Postgres to be ready
+      run: |
+          # Service container is reachable at localhost:5432 on GitHub-hosted runner
+          for i in $(seq 1 30); do
+            pg_isready -h localhost -p 5432 -U testuser && break
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+      env:
+        PGPASSWORD: testpass
 
-    # - name: Test
-    #   run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
-    #   env:
-    #     dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
-    #     dbuser: testuser
-    #     dbpass: testpass
+    - name: Test
+      run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
+      env:
+        dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
+        dbuser: testuser
+        dbpass: testpass
     
     #- name: Publish
       #run: mvn clean deploy --file pom.xml -DskipTests -B
@@ -112,20 +120,6 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ECR_NONPROD_PUSH_ROLE }}  # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: GitHubActionsECR
           aws-region: ${{ env.AWS_REGION }}
-      
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v5
-      #   with:
-      #     aws-region: ${{ env.AWS_REGION }}
-      #     role-session-name: GitHubActionsECR
-      #     role-to-assume: ${{ secrets.AWS_ADMIN_ROLE }}
-
-
-      #- name: Ensure ECR repository exists
-      #  run: |
-      #    aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" >/dev/null 2>&1 || \
-      #      aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
-        # This uses the temporary credentials from configure-aws-credentials.
 
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -136,12 +130,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      # - name: Download build artifact (target/)
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: build-target
-      #     path: ./   # downloads artifact contents into the runner workspace (creates ./target)
       
       # in docker job (download step)
       - name: Download build artifact (target/)
@@ -150,20 +138,6 @@ jobs:
           name: build-target
           path: target     # <--- downloads artifact contents into ./target
 
-      - name: Show downloaded files
-        run: |
-          echo "PWD: $(pwd)"
-          ls -la
-          ls -la target || true
-
-      # Optional: ensure the artifact exists before docker build
-      - name: Fail if artifact missing
-        run: |
-          if [ ! -d "target" ]; then
-            echo "target directory not found. Aborting."
-            exit 1
-          fi
-
       - name: Build and push to ECR
         uses: docker/build-push-action@v6
         with:
@@ -171,8 +145,9 @@ jobs:
           file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
-          # Tags: both 'latest' and a commit-specific digest tag
-          tags: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest,${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          tags: |
+            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
+            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ needs.maven.outputs.projectVersion }}
           # Optional: use GitHub Actions cache for build layers (fast incremental builds)
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -9,6 +9,12 @@ on:
   #release:
     #types: [created]
 
+env:
+  ARTIFACTORY_DEV_USER: ${{ secrets.ARTIFACTORY_DEV_USER }}
+  ARTIFACTORY_DEV_KEY: ${{ secrets.ARTIFACTORY_DEV_KEY }}
+  ARTIFACTORY_RELEASE_USER: ${{ secrets.ARTIFACTORY_RELEASE_USER }}
+  ARTIFACTORY_RELEASE_KEY: ${{ secrets.ARTIFACTORY_RELEASE_KEY }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,18 +43,21 @@ jobs:
           settings-servers: |
             [{
               "id": "myreleaserepo",
-              "username": "testuser",
-              "password": "testuser"
+              "username": "${env.ARTIFACTORY_RELEASE_USER}",
+              "password": "${env.ARTIFACTORY_RELEASE_KEY}"
             },
             {
               "id": "mysnapshotrepo",
-              "username": "testuser",
-              "password": "testuser"
+              "username": "${env.ARTIFACTORY_DEV_USER}",
+              "password": "${env.ARTIFACTORY_DEV_KEY}"
             }]
 
 
     - name: Build with Maven
       run: mvn -B package --file pom.xml -DskipTests
+    
+    - name: Publish with Maven
+      run: mvn -B deploy --file pom.xml -DskipTests
 
     #- name: Publish to GitHub Packages Apache Maven
       #run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml

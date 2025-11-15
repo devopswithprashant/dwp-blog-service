@@ -22,7 +22,7 @@ env:
   AWS_REGION: us-east-1           # <- change to your region or set as repo variable
   AWS_ACCOUNT_ID: 850756192530      # <- change to your AWS account id or set as repo var
   ECR_REPOSITORY: dwp/np/blog            # <- change to your ECR repository name
-  ECR_PUSH_ROLE: ${{ secrets.AWS_ECR_NONPROD_PUSH_ROLE }}
+  #ECR_PUSH_ROLE: ${{ secrets.AWS_ECR_NONPROD_PUSH_ROLE }}
 
 
 
@@ -109,9 +109,17 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: ${{ env.ECR_PUSH_ROLE }}  # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: githubActionsforNPecr
+          role-to-assume: ${{ secrets.AWS_ECR_NONPROD_PUSH_ROLE }}  # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActionsECR
           aws-region: ${{ env.AWS_REGION }}
+      
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v5
+      #   with:
+      #     aws-region: ${{ env.AWS_REGION }}
+      #     role-session-name: GitHubActionsECR
+      #     role-to-assume: ${{ secrets.AWS_ADMIN_ROLE }}
+
 
       #- name: Ensure ECR repository exists
       #  run: |

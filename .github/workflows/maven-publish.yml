@@ -109,7 +109,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: $ECR_PUSH_ROLE   # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ env.ECR_PUSH_ROLE }}  # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: githubActionsforNPecr
           aws-region: ${{ env.AWS_REGION }}
 

@@ -22,6 +22,7 @@ concurrency:
 
 
 env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ARTIFACTORY_DEV_USER: ${{ secrets.ARTIFACTORY_DEV_USER }}
   ARTIFACTORY_DEV_KEY: ${{ secrets.ARTIFACTORY_DEV_KEY }}
   ARTIFACTORY_RELEASE_USER: ${{ secrets.ARTIFACTORY_RELEASE_USER }}
@@ -69,8 +70,8 @@ jobs:
 
     - name: Release
       run: |
-        git config user.email "devopswithprashant@gmail.com"
-        git config user.name "devopswithprashant"
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
         PROJECT_VERSION=${{ steps.project_version.outputs.version }}
         ReleaseTagName="v${PROJECT_VERSION}"
         mvn release:clean

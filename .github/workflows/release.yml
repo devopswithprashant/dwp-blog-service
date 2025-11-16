@@ -1,16 +1,13 @@
 # This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
 
-name: Build
+name: Release
 
 on:
-  #push:
   workflow_dispatch:
-  #release:
-    #types: [created]
 
 permissions:
-  contents: read
+  contents: write
   id-token: write 
 
 
@@ -32,7 +29,7 @@ env:
   # Set defaults here or as repository/organization variables (recommended)
   AWS_REGION: us-east-1           # <- change to your region or set as repo variable
   AWS_ACCOUNT_ID: 850756192530      # <- change to your AWS account id or set as repo var
-  ECR_REPOSITORY: dwp/np/blog            # <- change to your ECR repository name
+  ECR_REPOSITORY: dwp/blog            # <- change to your ECR repository name
   GIT_USER_NAME: "ci-bot"
   GIT_USER_EMAIL: "ci-bot@devopswithprashant.com"
 
@@ -44,20 +41,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       projectVersion: ${{ steps.project_version.outputs.version }}
-    services:
-      postgres:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-        options: >-
-          --health-cmd "pg_isready -U testuser"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
 
     - name: Setup Maven Action
@@ -81,12 +64,22 @@ jobs:
     - name: Get project version from POM
       id: project_version
       run: |
-        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-    - name: Build
-      run: mvn clean package --file pom.xml -DskipTests -B
-    
+    - name: Release
+      run: |
+        git config user.email "devopswithprashant@gmail.com"
+        git config user.name "devopswithprashant"
+        PROJECT_VERSION=${{ steps.project_version.outputs.version }}
+        ReleaseTagName="v${PROJECT_VERSION}"
+        mvn release:clean
+        mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
+        mvn release:perform -Dusername=devopswithprashant -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
+        git config --unset user.email
+        git config --unset user.name
+
+
     - name: Upload build artifact (target/)
       uses: actions/upload-artifact@v4
       with:
@@ -95,26 +88,6 @@ jobs:
         path: target/*
     
 
-    - name: Wait for Postgres to be ready
-      run: |
-          # Service container is reachable at localhost:5432 on GitHub-hosted runner
-          for i in $(seq 1 30); do
-            pg_isready -h localhost -p 5432 -U testuser && break
-            echo "Waiting for postgres..."
-            sleep 2
-          done
-      env:
-        PGPASSWORD: testpass
-
-    - name: Test
-      run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
-      env:
-        dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
-        dbuser: testuser
-        dbpass: testpass
-    
-    #- name: Publish
-      #run: mvn clean deploy --file pom.xml -DskipTests -B
 
 
   docker:
@@ -127,7 +100,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-to-assume: ${{ secrets.AWS_ECR_NONPROD_PUSH_ROLE }}  # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ECR_PROD_PUSH_ROLE }}  # or use a secret: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: GitHubActionsECR
           aws-region: ${{ env.AWS_REGION }}
 
@@ -157,56 +130,56 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest
-            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}
+            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:v${{ needs.maven.outputs.projectVersion }}
           # Optional: use GitHub Actions cache for build layers (fast incremental builds)
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   
-  deploy-DEV:
-    needs: [maven, docker]
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    steps:
-    # Checkout the repository to the GitHub Actions runner
-      - name: Checkout gitops repo
-        uses: actions/checkout@v4
-        with:
-          repository: "devopswithprashant/k8-blogApp"
-          token: ${{ secrets.GHEC_TOKEN_K8 }}
-          ref: ${{ github.ref }}
-          fetch-depth: 10
+  # deploy-DEV:
+  #   needs: [maven, docker]
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   steps:
+  #   # Checkout the repository to the GitHub Actions runner
+  #     - name: Checkout gitops repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: "devopswithprashant/k8-blogApp"
+  #         token: ${{ secrets.GHEC_TOKEN_K8 }}
+  #         ref: ${{ github.ref }}
+  #         fetch-depth: 10
 
-      - name: Update image tag in target file
-        #working-directory: gitops
-        id: update
-        env:
-          FILE: "apps/blog/dev/backend/blog-deployment.yaml"
-          IMAGE: "850756192530.dkr.ecr.us-east-1.amazonaws.com/dwp/np/blog"
-          NEW_TAG: ${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}
-        run: |
-          set -euo pipefail
-          if [ ! -f "$FILE" ]; then
-            echo "ERROR target file not found: $FILE"
-            exit 1
-          fi
-          sed -i -E "s|(image:\s*850756192530\.dkr\.ecr\.us-east-1\.amazonaws\.com/dwp/np/blog:)[^[:space:]]+|\1${NEW_TAG}|" "$FILE"
-          # Git config
-          git config user.name "${GIT_USER_NAME}"
-          git config user.email "${GIT_USER_EMAIL}"
-          # Check if file actually changed before committing
-          if git diff --quiet -- "$FILE"; then
-            echo "✅ No changes detected in $FILE — skipping commit & push."
-            exit 0
-          fi
-          git add "$FILE"
-          if git diff --cached --quiet; then
-            echo "✅ Nothing new to commit — skipping push."
-            exit 0
-          fi
-          git commit -m "chore(DEV): bump new version ${NEW_TAG} of blog image ${IMAGE}"
-          git push origin ${{ github.ref }}
+  #     - name: Update image tag in target file
+  #       #working-directory: gitops
+  #       id: update
+  #       env:
+  #         FILE: "apps/blog/dev/backend/blog-deployment.yaml"
+  #         IMAGE: "850756192530.dkr.ecr.us-east-1.amazonaws.com/dwp/np/blog"
+  #         NEW_TAG: ${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}
+  #       run: |
+  #         set -euo pipefail
+  #         if [ ! -f "$FILE" ]; then
+  #           echo "ERROR target file not found: $FILE"
+  #           exit 1
+  #         fi
+  #         sed -i -E "s|(image:\s*850756192530\.dkr\.ecr\.us-east-1\.amazonaws\.com/dwp/np/blog:)[^[:space:]]+|\1${NEW_TAG}|" "$FILE"
+  #         # Git config
+  #         git config user.name "${GIT_USER_NAME}"
+  #         git config user.email "${GIT_USER_EMAIL}"
+  #         # Check if file actually changed before committing
+  #         if git diff --quiet -- "$FILE"; then
+  #           echo "✅ No changes detected in $FILE — skipping commit & push."
+  #           exit 0
+  #         fi
+  #         git add "$FILE"
+  #         if git diff --cached --quiet; then
+  #           echo "✅ Nothing new to commit — skipping push."
+  #           exit 0
+  #         fi
+  #         git commit -m "chore(DEV): bump new version ${NEW_TAG} of blog image ${IMAGE}"
+  #         git push origin ${{ github.ref }}
 
       

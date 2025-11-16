@@ -33,6 +33,7 @@ env:
   ECR_REPOSITORY: dwp/np/blog            # <- change to your ECR repository name
   GIT_USER_NAME: "ci-bot"
   GIT_USER_EMAIL: "ci-bot@devopswithprashant.com"
+  GITOPS_BRANCH_NAME: "feat/cd"
 
 
 
@@ -174,7 +175,7 @@ jobs:
         with:
           repository: "devopswithprashant/k8-blogApp"
           token: ${{ secrets.GHEC_TOKEN_K8 }}
-          ref: ${{ github.ref }}
+          ref: ${GITOPS_BRANCH_NAME}
           fetch-depth: 10
 
       - name: Update image tag in target file
@@ -205,7 +206,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore(DEV): bump new version ${NEW_TAG} of blog image ${IMAGE}"
-          git push origin ${{ github.ref }}
+          git push origin ${GITOPS_BRANCH_NAME}
 
   deploy-QA:
     needs: [maven, docker, deploy-DEV]
@@ -220,7 +221,7 @@ jobs:
         with:
           repository: "devopswithprashant/k8-blogApp"
           token: ${{ secrets.GHEC_TOKEN_K8 }}
-          ref: ${{ github.ref }}
+          ref: ${GITOPS_BRANCH_NAME}
           fetch-depth: 10
 
       - name: Update image tag in target file
@@ -251,6 +252,6 @@ jobs:
             exit 0
           fi
           git commit -m "chore(QA): bump new version ${NEW_TAG} of blog image ${IMAGE}"
-          git push origin ${{ github.ref }}
+          git push origin ${GITOPS_BRANCH_NAME}
 
       

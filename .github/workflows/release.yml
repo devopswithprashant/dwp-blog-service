@@ -149,7 +149,7 @@ jobs:
         with:
           repository: "devopswithprashant/k8-blogApp"
           token: ${{ secrets.GHEC_TOKEN_K8 }}
-          ref: ${GITOPS_BRANCH_NAME}
+          ref: ${{ env.GITOPS_BRANCH_NAME }}
           fetch-depth: 10
 
       - name: Update image tag in target file
@@ -180,7 +180,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore(DEV): bump new version ${NEW_TAG} of blog image ${IMAGE}"
-          git push origin ${GITOPS_BRANCH_NAME}
+          git push origin ${{ env.GITOPS_BRANCH_NAME }}
 
   deploy-QA:
     needs: [maven, docker, deploy-DEV]
@@ -195,7 +195,7 @@ jobs:
         with:
           repository: "devopswithprashant/k8-blogApp"
           token: ${{ secrets.GHEC_TOKEN_K8 }}
-          ref: ${GITOPS_BRANCH_NAME}
+          ref: ${{ env.GITOPS_BRANCH_NAME }}
           fetch-depth: 10
 
       - name: Update image tag in target file
@@ -226,7 +226,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore(QA): bump new version ${NEW_TAG} of blog image ${IMAGE}"
-          git push origin ${GITOPS_BRANCH_NAME}
+          git push origin ${{ env.GITOPS_BRANCH_NAME }}
 
   deploy-STAGE:
     needs: [maven, docker, deploy-QA]
@@ -241,7 +241,7 @@ jobs:
         with:
           repository: "devopswithprashant/k8-blogApp"
           token: ${{ secrets.GHEC_TOKEN_K8 }}
-          ref: ${GITOPS_BRANCH_NAME}
+          ref: ${{ env.GITOPS_BRANCH_NAME }}
           fetch-depth: 10
 
       - name: Update image tag in target file
@@ -272,7 +272,7 @@ jobs:
             exit 0
           fi
           git commit -m "chore(STAGE): bump new version ${NEW_TAG} of blog image ${IMAGE}"
-          git push origin ${GITOPS_BRANCH_NAME}
+          git push origin ${{ env.GITOPS_BRANCH_NAME }}
 
   deploy-PROD:
     needs: [maven, docker, deploy-STAGE]
@@ -287,7 +287,7 @@ jobs:
         with:
           repository: "devopswithprashant/k8-blogApp"
           token: ${{ secrets.GHEC_TOKEN_K8 }}
-          ref: ${GITOPS_BRANCH_NAME}
+          ref: ${{ env.GITOPS_BRANCH_NAME }}
           fetch-depth: 10
 
       - name: Update image tag in target file
@@ -318,6 +318,6 @@ jobs:
             exit 0
           fi
           git commit -m "chore(PROD): bump new version ${NEW_TAG} of blog image ${IMAGE}"
-          git push origin ${GITOPS_BRANCH_NAME}
+          git push origin ${{ env.GITOPS_BRANCH_NAME }}
 
       

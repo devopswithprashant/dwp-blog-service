@@ -250,7 +250,7 @@ jobs:
             echo "✅ Nothing new to commit — skipping push."
             exit 0
           fi
-          git commit -m "chore(DEV): bump new version ${NEW_TAG} of blog image ${IMAGE}"
+          git commit -m "chore(QA): bump new version ${NEW_TAG} of blog image ${IMAGE}"
           git push origin ${{ github.ref }}
 
       

@@ -1,16 +1,13 @@
 # This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
 # For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
 
-name: Build
+name: Release
 
 on:
-  #push:
   workflow_dispatch:
-  #release:
-    #types: [created]
 
 permissions:
-  contents: read
+  contents: write
   id-token: write 
 
 
@@ -32,7 +29,7 @@ env:
   # Set defaults here or as repository/organization variables (recommended)
   AWS_REGION: us-east-1           # <- change to your region or set as repo variable
   AWS_ACCOUNT_ID: 850756192530      # <- change to your AWS account id or set as repo var
-  ECR_REPOSITORY: dwp/np/blog            # <- change to your ECR repository name
+  ECR_REPOSITORY: dwp/blog            # <- change to your ECR repository name
   GIT_USER_NAME: "ci-bot"
   GIT_USER_EMAIL: "ci-bot@devopswithprashant.com"
 
@@ -40,24 +37,10 @@ env:
 
 
 jobs:
-  maven:
+  maven-release:
     runs-on: ubuntu-latest
     outputs:
       projectVersion: ${{ steps.project_version.outputs.version }}
-    services:
-      postgres:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-        options: >-
-          --health-cmd "pg_isready -U testuser"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
 
     - name: Setup Maven Action
@@ -81,12 +64,22 @@ jobs:
     - name: Get project version from POM
       id: project_version
       run: |
-        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | sed 's/-SNAPSHOT//')
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-    - name: Build
-      run: mvn clean package --file pom.xml -DskipTests -B
-    
+    - name: Release
+      run: |
+        git config user.email "devopswithprashant@gmail.com"
+        git config user.name "devopswithprashant"
+        PROJECT_VERSION=${{ steps.project_version.outputs.version }}
+        ReleaseTagName="v${PROJECT_VERSION}"
+        mvn release:clean
+        mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=devopswithprashant -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
+        mvn release:perform -Dusername=devopswithprashant -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
+        git config --unset user.email
+        git config --unset user.name
+
+
     - name: Upload build artifact (target/)
       uses: actions/upload-artifact@v4
       with:
@@ -95,26 +88,6 @@ jobs:
         path: target/*
     
 
-    - name: Wait for Postgres to be ready
-      run: |
-          # Service container is reachable at localhost:5432 on GitHub-hosted runner
-          for i in $(seq 1 30); do
-            pg_isready -h localhost -p 5432 -U testuser && break
-            echo "Waiting for postgres..."
-            sleep 2
-          done
-      env:
-        PGPASSWORD: testpass
-
-    - name: Test
-      run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
-      env:
-        dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
-        dbuser: testuser
-        dbpass: testpass
-    
-    #- name: Publish
-      #run: mvn clean deploy --file pom.xml -DskipTests -B
 
 
   docker:

@@ -33,7 +33,7 @@ env:
   ECR_REPOSITORY: dwp/blog            # <- change to your ECR repository name
   GIT_USER_NAME: "ci-bot"
   GIT_USER_EMAIL: "ci-bot@devopswithprashant.com"
-  GITOPS_BRANCH_NAME: "feat/cd"
+  GITOPS_BRANCH_NAME: "feat-cd"
 
 
 
@@ -184,6 +184,8 @@ jobs:
           git commit -m "chore(DEV): bump new version ${NEW_TAG} of blog image ${IMAGE}"
           git push origin ${{ env.GITOPS_BRANCH_NAME }}
 
+          
+
   deploy-QA:
     needs: [maven, docker, deploy-DEV]
     runs-on: ubuntu-latest
@@ -233,6 +235,8 @@ jobs:
           git commit -m "chore(QA): bump new version ${NEW_TAG} of blog image ${IMAGE}"
           git push origin ${{ env.GITOPS_BRANCH_NAME }}
 
+          sleep 300
+
   deploy-STAGE:
     needs: [maven, docker, deploy-QA]
     runs-on: ubuntu-latest
@@ -278,6 +282,8 @@ jobs:
           fi
           git commit -m "chore(STAGE): bump new version ${NEW_TAG} of blog image ${IMAGE}"
           git push origin ${{ env.GITOPS_BRANCH_NAME }}
+
+          sleep 120
 
   deploy-PROD:
     needs: [maven, docker, deploy-STAGE]

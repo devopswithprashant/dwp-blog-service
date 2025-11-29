@@ -159,13 +159,15 @@ jobs:
           FILE: "apps/blog/dev/backend/blog-deployment.yaml"
           IMAGE: "850756192530.dkr.ecr.us-east-1.amazonaws.com/dwp/blog"
           NEW_TAG: "v${{ needs.maven.outputs.projectVersion }}"
+          NEW_IMAGE: "${IMAGE}:${NEW_TAG}"
         run: |
           set -euo pipefail
           if [ ! -f "$FILE" ]; then
             echo "ERROR target file not found: $FILE"
             exit 1
           fi
-          sed -i -E "s|(image:\s*850756192530\.dkr\.ecr\.us-east-1\.amazonaws\.com/dwp/blog:)[^[:space:]]+|\1${NEW_TAG}|" "$FILE"
+          sed -E -i "s|850756192530\.dkr\.ecr\.us-east-1\.amazonaws\.com/dwp(?:/np)?/blog:[^[:space:]]+|${NEW_IMAGE}|g" "$FILE"
+  
           # Git config
           git config user.name "${GIT_USER_NAME}"
           git config user.email "${GIT_USER_EMAIL}"
@@ -205,13 +207,15 @@ jobs:
           FILE: "apps/blog/qa/backend/blog-deployment.yaml"
           IMAGE: "850756192530.dkr.ecr.us-east-1.amazonaws.com/dwp/blog"
           NEW_TAG: "v${{ needs.maven.outputs.projectVersion }}"
+          NEW_IMAGE: "${IMAGE}:${NEW_TAG}"
         run: |
           set -euo pipefail
           if [ ! -f "$FILE" ]; then
             echo "ERROR target file not found: $FILE"
             exit 1
           fi
-          sed -i -E "s|(image:\s*850756192530\.dkr\.ecr\.us-east-1\.amazonaws\.com/dwp/blog:)[^[:space:]]+|\1${NEW_TAG}|" "$FILE"
+          sed -E -i "s|850756192530\.dkr\.ecr\.us-east-1\.amazonaws\.com/dwp(?:/np)?/blog:[^[:space:]]+|${NEW_IMAGE}|g" "$FILE"
+  
           # Git config
           git config user.name "${GIT_USER_NAME}"
           git config user.email "${GIT_USER_EMAIL}"
@@ -251,6 +255,7 @@ jobs:
           FILE: "apps/blog/stage/backend/blog-deployment.yaml"
           IMAGE: "850756192530.dkr.ecr.us-east-1.amazonaws.com/dwp/blog"
           NEW_TAG: "v${{ needs.maven.outputs.projectVersion }}"
+          NEW_IMAGE: "${IMAGE}:${NEW_TAG}"
         run: |
           set -euo pipefail
           if [ ! -f "$FILE" ]; then
@@ -297,6 +302,7 @@ jobs:
           FILE: "apps/blog/prod/backend/blog-deployment.yaml"
           IMAGE: "850756192530.dkr.ecr.us-east-1.amazonaws.com/dwp/blog"
           NEW_TAG: "v${{ needs.maven.outputs.projectVersion }}"
+          NEW_IMAGE: "${IMAGE}:${NEW_TAG}"
         run: |
           set -euo pipefail
           if [ ! -f "$FILE" ]; then

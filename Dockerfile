@@ -9,15 +9,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring
 
+# Set the working directory and copy the application JAR file
 WORKDIR /app
 COPY --chown=spring:spring target/*.jar app.jar
-
-# Set the working directory in the container
-#WORKDIR /app
-
-# Copy the JAR file from the host's target directory into the container
-# Replace 'your-application.jar' with your actual JAR filename pattern
-#COPY target/*.jar app.jar
 
 # Expose the port your app runs on (default Spring Boot port is 8080)
 EXPOSE 9090

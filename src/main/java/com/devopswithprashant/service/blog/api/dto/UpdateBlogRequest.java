@@ -1,4 +1,4 @@
-package com.devopswithprashant.api.blog.api.dto;
+package com.devopswithprashant.service.blog.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -1,4 +1,4 @@
-package com.devopswithprashant.api.blog.domain;
+package com.devopswithprashant.service.blog.domain;
 
 
 import jakarta.persistence.*;

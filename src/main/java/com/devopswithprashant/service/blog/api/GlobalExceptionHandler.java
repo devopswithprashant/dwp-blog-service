@@ -1,6 +1,6 @@
-package com.devopswithprashant.api.blog.api;
+package com.devopswithprashant.service.blog.api;
 
-import com.devopswithprashant.api.blog.exception.BlogNotFoundException;
+import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

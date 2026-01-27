@@ -1,4 +1,4 @@
-package com.devopswithprashant.api.blog.exception;
+package com.devopswithprashant.service.blog.exception;
 
 public class BlogNotFoundException extends RuntimeException {
 

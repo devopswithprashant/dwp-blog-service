@@ -1,9 +1,9 @@
-package com.devopswithprashant.api.blog.application;
+package com.devopswithprashant.service.blog.application;
 
-import com.devopswithprashant.api.blog.api.dto.*;
-import com.devopswithprashant.api.blog.domain.*;
-import com.devopswithprashant.api.blog.infrastructure.repository.*;
-import com.devopswithprashant.api.blog.exception.BlogNotFoundException;
+import com.devopswithprashant.service.blog.api.dto.*;
+import com.devopswithprashant.service.blog.domain.*;
+import com.devopswithprashant.service.blog.infrastructure.repository.*;
+import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

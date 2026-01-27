@@ -1,4 +1,4 @@
-package com.devopswithprashant.api.blog;
+package com.devopswithprashant.service.blog;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

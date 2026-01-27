@@ -1,4 +1,4 @@
-package com.devopswithprashant.api.blog;
+package com.devopswithprashant.service.blog;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,7 +1,7 @@
-package com.devopswithprashant.api.blog.api;
+package com.devopswithprashant.service.blog.api;
 
-import com.devopswithprashant.api.blog.api.dto.*;
-import com.devopswithprashant.api.blog.application.BlogService;
+import com.devopswithprashant.service.blog.api.dto.*;
+import com.devopswithprashant.service.blog.application.BlogService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

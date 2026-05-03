@@ -1,0 +1,8 @@
+package com.devopswithprashant.service.blog.exception;
+
+public class BlogNotFoundException extends RuntimeException {
+
+    public BlogNotFoundException(Long blogId) {
+        super("Blog not found with id: " + blogId);
+    }
+}

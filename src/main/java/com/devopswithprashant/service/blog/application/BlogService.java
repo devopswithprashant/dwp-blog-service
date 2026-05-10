@@ -4,6 +4,8 @@ import com.devopswithprashant.service.blog.api.dto.*;
 import com.devopswithprashant.service.blog.domain.*;
 import com.devopswithprashant.service.blog.infrastructure.repository.*;
 import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,8 @@ import java.time.Instant;
 @Service
 @Transactional
 public class BlogService {
+
+    private static final Logger log = LoggerFactory.getLogger(BlogService.class);
 
     private final BlogPostRepository postRepo;
     private final BlogPostContentRepository contentRepo;
@@ -32,6 +36,11 @@ public class BlogService {
 
     public Long createDraft(Long authorId, String title, String markdown) {
 
+        log.debug("Creating draft blog authorId={} titleLength={} markdownLength={}",
+                authorId,
+                title == null ? 0 : title.length(),
+                markdown == null ? 0 : markdown.length()
+        );
         BlogPost post = new BlogPost();
         post.setAuthorId(authorId);
         post.setTitle(title);
@@ -49,6 +58,7 @@ public class BlogService {
         contentRepo.save(content);
         saveVersion(post.getId(), markdown);
 
+        log.info("Draft blog created postId={} authorId={} slug={}", post.getId(), authorId, post.getSlug());
         return post.getId();
     }
 
@@ -72,6 +82,7 @@ public class BlogService {
 
     @Transactional(readOnly = true)
     public BlogMetadataResponse getMetadata(Long blogId) {
+        log.debug("Fetching blog metadata postId={}", blogId);
         BlogPost post = postRepo.findById(blogId)
                 .orElseThrow(() -> new BlogNotFoundException(blogId));
 
@@ -102,6 +113,7 @@ public class BlogService {
     @Transactional(readOnly = true)
     public BlogContentResponse getContent(Long blogId) {
 
+        log.debug("Fetching blog content postId={}", blogId);
         BlogPostContent content = contentRepo.findByPostId(blogId)
                 .orElseThrow(() -> new BlogNotFoundException(blogId));
 
@@ -115,6 +127,11 @@ public class BlogService {
 
     @Transactional(readOnly = true)
     public Page<BlogMetadataResponse> getAllBlogs(Pageable pageable) {
+        log.debug("Listing blogs page={} size={} sort={}",
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort()
+        );
         return postRepo.findAll(pageable)
                 .map(post -> {
                     BlogMetadataResponse resp = new BlogMetadataResponse();
@@ -133,6 +150,11 @@ public class BlogService {
 
     public void updateBlog(Long blogId, UpdateBlogRequest request) {
 
+        log.debug("Updating blog postId={} titleLength={} markdownLength={}",
+                blogId,
+                request.getTitle() == null ? 0 : request.getTitle().length(),
+                request.getMarkdown() == null ? 0 : request.getMarkdown().length()
+        );
         BlogPost post = postRepo.findById(blogId).orElseThrow();
         post.setTitle(request.getTitle());
         post.setSlug(generateSlug(request.getTitle()));
@@ -142,20 +164,24 @@ public class BlogService {
         content.setContent(request.getMarkdown());
 
         saveVersion(blogId, request.getMarkdown());
+        log.info("Blog updated postId={} slug={}", blogId, post.getSlug());
     }
 
     /* ---------------- DELETE ---------------- */
 
     public void deleteBlog(Long blogId) {
+        log.info("Deleting blog postId={}", blogId);
         postRepo.deleteById(blogId); // CASCADE deletes content & versions
     }
 
     /* ---------------- PUBLISH ---------------- */
 
     public void publish(Long postId) {
+        log.info("Publishing blog postId={}", postId);
         BlogPost post = postRepo.findById(postId).orElseThrow();
         post.setStatus(PostStatus.PUBLISHED);
         post.setPublishedAt(Instant.now());
+        log.info("Blog published postId={} publishedAt={}", postId, post.getPublishedAt());
     }
 
     /* ---------------- HELPERS ---------------- */
@@ -174,6 +200,7 @@ public class BlogService {
         v.setCreatedAt(Instant.now());
 
         versionRepo.save(v);
+        log.debug("Saved blog version postId={} version={}", postId, version);
     }
 
     private String generateSlug(String title) {

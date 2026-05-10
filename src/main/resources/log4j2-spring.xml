@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <!-- Prefer structured logs; keep pattern readable and correlation-friendly -->
+        <Property name="CONSOLE_PATTERN">%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%t] %c{1.} traceId=%X{traceId} - %msg%notEmpty{ %ex{short}}%n</Property>
+        <Property name="APP_NAME">${spring:application:name:-blog-service}</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${CONSOLE_PATTERN}"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <!-- Application code -->
+        <Logger name="com.devopswithprashant.service" level="${sys:APP_LOG_LEVEL:-INFO}" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Reduce noise from common dependencies -->
+        <Logger name="org.springframework" level="WARN"/>
+        <Logger name="org.hibernate" level="WARN"/>
+        <Logger name="org.apache" level="WARN"/>
+        <Logger name="com.zaxxer.hikari" level="WARN"/>
+        <Logger name="org.postgresql" level="WARN"/>
+
+        <Root level="${sys:ROOT_LOG_LEVEL:-INFO}">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -45,10 +45,11 @@ data:
             target_label: app
             regex: "(.+)"
 
-      # Fallback: scrape blog-service ClusterIP when running in default namespace
-      - job_name: blog-service-static
-        metrics_path: /actuator/prometheus
-        static_configs:
-          - targets: ["blog-service.default.svc.cluster.local:8080"]
-            labels:
-              service: blog-service
+      # Use EITHER pod discovery (above) OR static service target — not both.
+      # Duplicate scrape targets double every counter and break Grafana stat panels.
+      # - job_name: blog-service-static
+      #   metrics_path: /actuator/prometheus
+      #   static_configs:
+      #     - targets: ["blog-service.default.svc.cluster.local:8080"]
+      #       labels:
+      #         service: blog-service

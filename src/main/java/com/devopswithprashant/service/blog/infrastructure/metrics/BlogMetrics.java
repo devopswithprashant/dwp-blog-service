@@ -18,7 +18,8 @@ public class BlogMetrics {
 
     public BlogMetrics(MeterRegistry registry) {
         this.registry = registry;
-        this.postsCreated = Counter.builder("blog.posts.created")
+        // Avoid name suffix ".created" — Micrometer/Prometheus maps it to blog_posts_total (ambiguous)
+        this.postsCreated = Counter.builder("blog.drafts")
                 .description("Draft blog posts created")
                 .register(registry);
         this.postsPublished = Counter.builder("blog.posts.published")

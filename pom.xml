@@ -56,6 +56,18 @@
 			<artifactId>spring-boot-starter-log4j2</artifactId>
 		</dependency>
 
+		<!-- Exposes /actuator/health, /actuator/prometheus etc -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+
+		<!-- Converts Micrometer metrics to Prometheus text format -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+
         <!-- JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

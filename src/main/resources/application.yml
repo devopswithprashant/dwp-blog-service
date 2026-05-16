@@ -1,3 +1,6 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   application:
     name: blog-service
@@ -30,10 +33,44 @@ spring:
     baseline-on-migrate: false
     validate-on-migrate: true
 
-server:
-  port: ${SERVER_PORT:8080}
 
+# ───────────── Logging configuration ──────────────────────────────
 logging:
   config: classpath:log4j2-spring.xml
   level:
     root: INFO
+
+
+# ── Actuator & Prometheus config ──────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose health, info, and prometheus endpoints
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${SPRING_PROFILES_ACTIVE:local}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 100ms,250ms,500ms,1s,2s
+    enable:
+      jvm: true
+      process: true
+      tomcat: true
+      jdbc: true
+      hikaricp: true
+      hibernate: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true

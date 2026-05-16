@@ -80,7 +80,7 @@ mvn clean install -P dev -DskipTests
 
 ## Access API at:
 
-http://localhost:9090/api/blogs
+http://localhost:8080/api/blogs
 
 
 

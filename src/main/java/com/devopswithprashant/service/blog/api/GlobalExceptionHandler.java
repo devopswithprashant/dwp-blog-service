@@ -1,6 +1,7 @@
 package com.devopswithprashant.service.blog.api;
 
 import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
+import com.devopswithprashant.service.blog.infrastructure.metrics.BlogMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,8 +17,15 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    private final BlogMetrics blogMetrics;
+
+    public GlobalExceptionHandler(BlogMetrics blogMetrics) {
+        this.blogMetrics = blogMetrics;
+    }
+
     @ExceptionHandler(BlogNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleBlogNotFound(BlogNotFoundException ex) {
+        blogMetrics.recordPostNotFound();
         log.warn("Blog not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                 Map.of(

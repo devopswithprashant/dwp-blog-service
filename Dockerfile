@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --chown=spring:spring target/*.jar app.jar
 
 # Expose the port your app runs on (default Spring Boot port is 8080)
-EXPOSE 9090
+EXPOSE 8080
 
 # Run the JAR file when the container starts
 ENTRYPOINT ["java", "-jar", "app.jar"]

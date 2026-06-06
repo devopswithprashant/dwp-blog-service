@@ -8,10 +8,12 @@ import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
 import com.devopswithprashant.service.blog.infrastructure.repository.BlogPostContentRepository;
 import com.devopswithprashant.service.blog.infrastructure.repository.BlogPostRepository;
 import com.devopswithprashant.service.blog.infrastructure.repository.BlogPostVersionRepository;
+import com.devopswithprashant.service.blog.infrastructure.metrics.BlogMetrics;
 import com.devopswithprashant.service.blog.api.dto.BlogContentResponse;
 import com.devopswithprashant.service.blog.api.dto.BlogMetadataResponse;
 import com.devopswithprashant.service.blog.api.dto.UpdateBlogRequest;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,8 +37,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,11 +56,28 @@ class BlogServiceTest {
     @Mock
     private BlogPostVersionRepository versionRepository;
 
+    @Mock
+    private BlogMetrics blogMetrics;
+
     @InjectMocks
     private BlogService blogService;
 
     // Counter for generating unique IDs
     private final AtomicLong idCounter = new AtomicLong(0);
+
+    @BeforeEach
+    void stubMetricsToExecuteCallbacks() {
+        lenient().doAnswer(invocation -> {
+            Runnable action = invocation.getArgument(1);
+            action.run();
+            return null;
+        }).when(blogMetrics).recordTimed(anyString(), any(Runnable.class));
+
+        lenient().doAnswer(invocation -> {
+            Supplier<?> supplier = invocation.getArgument(1);
+            return supplier.get();
+        }).when(blogMetrics).recordTimed(anyString(), any(Supplier.class));
+    }
 
     // Helper method to setup postRepository.save() mock with ID assignment
     private void setupPostRepositorySaveMock() {

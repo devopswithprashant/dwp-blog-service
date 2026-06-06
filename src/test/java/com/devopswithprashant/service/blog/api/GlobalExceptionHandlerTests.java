@@ -1,20 +1,35 @@
 package com.devopswithprashant.service.blog.api;
 
 import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
+import com.devopswithprashant.service.blog.infrastructure.metrics.BlogMetrics;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
+@ExtendWith(MockitoExtension.class)
 @DisplayName("GlobalExceptionHandler Tests")
 class GlobalExceptionHandlerTests {
 
-    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    @Mock
+    private BlogMetrics blogMetrics;
+
+    private GlobalExceptionHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        handler = new GlobalExceptionHandler(blogMetrics);
+    }
 
     @Nested
     @DisplayName("BlogNotFoundException Handler Tests")
@@ -39,6 +54,7 @@ class GlobalExceptionHandlerTests {
             
             assertThat(response.getBody()).isNotNull().isNotEmpty();
             assertThat(response.getBody()).containsKey("message").containsKey("status").containsKey("error");
+            verify(blogMetrics).recordPostNotFound();
         }
 
         @Test
@@ -108,18 +124,11 @@ class GlobalExceptionHandlerTests {
     @Nested
     @DisplayName("Handler Constructor and Instantiation Tests")
     class HandlerInstantiationTests {
-        
+
         @Test
         @DisplayName("should instantiate GlobalExceptionHandler successfully")
         void shouldInstantiateSuccessfully() {
-            GlobalExceptionHandler newHandler = new GlobalExceptionHandler();
-            assertThat(newHandler).isNotNull();
-        }
-
-        @Test
-        @DisplayName("should create handler instance without errors")
-        void shouldCreateInstanceWithoutErrors() {
-            assertThat(new GlobalExceptionHandler()).isInstanceOf(GlobalExceptionHandler.class);
+            assertThat(new GlobalExceptionHandler(blogMetrics)).isNotNull();
         }
     }
 }

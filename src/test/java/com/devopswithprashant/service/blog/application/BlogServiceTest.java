@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -148,6 +149,24 @@ class BlogServiceTest {
             ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
             verify(postRepository).save(postCaptor.capture());
             assertThat(postCaptor.getValue().getAuthorId()).isEqualTo(authorId);
+        }
+
+        @Test
+        @DisplayName("should accept uuid author identity strings without failing")
+        void shouldAcceptUuidAuthorIdentityStrings() {
+            String authorId = UUID.randomUUID().toString();
+            String title = "Uuid Author Blog";
+            String markdown = "By uuid author";
+
+            setupPostRepositorySaveMock();
+            when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
+
+            blogService.createDraft(authorId, title, markdown);
+
+            ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
+            verify(postRepository).save(postCaptor.capture());
+            assertThat(postCaptor.getValue().getAuthorUuid()).isEqualTo(UUID.fromString(authorId));
         }
 
         @Test

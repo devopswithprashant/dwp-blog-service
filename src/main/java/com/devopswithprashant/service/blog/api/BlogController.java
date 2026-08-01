@@ -34,7 +34,7 @@ public class BlogController {
                 request.getTitle() == null ? 0 : request.getTitle().length()
         );
         Long postId = blogService.createDraft(
-                request.getAuthorId(),
+                request.getAuthorIdentity(),
                 request.getTitle(),
                 request.getMarkdown()
         );

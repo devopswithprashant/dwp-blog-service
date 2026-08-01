@@ -1,12 +1,11 @@
 package com.devopswithprashant.service.blog.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public class CreateBlogRequest {
 
-    @NotNull
-    private Long authorId;
+    @NotBlank
+    private String authorIdentity;
 
     @NotBlank
     private String title;
@@ -15,11 +14,23 @@ public class CreateBlogRequest {
     private String markdown;
 
     public Long getAuthorId() {
-        return authorId;
+        if (authorIdentity == null || authorIdentity.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(authorIdentity.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
-    public void setAuthorId(Long authorId) {
-        this.authorId = authorId;
+    public String getAuthorIdentity() {
+        return authorIdentity;
+    }
+
+    public void setAuthorId(Object authorId) {
+        this.authorIdentity = authorId == null ? null : authorId.toString();
     }
 
     public String getTitle() {
@@ -38,10 +49,14 @@ public class CreateBlogRequest {
         this.markdown = markdown;
     }
 
-    public CreateBlogRequest(@NotNull Long authorId, @NotBlank String title, @NotBlank String markdown) {
-        this.authorId = authorId;
+    public CreateBlogRequest(@NotBlank String authorIdentity, @NotBlank String title, @NotBlank String markdown) {
+        this.authorIdentity = authorIdentity;
         this.title = title;
         this.markdown = markdown;
+    }
+
+    public CreateBlogRequest(Long authorId, @NotBlank String title, @NotBlank String markdown) {
+        this(authorId == null ? null : authorId.toString(), title, markdown);
     }
 
     public CreateBlogRequest() {
@@ -50,7 +65,7 @@ public class CreateBlogRequest {
 
     @Override
     public String toString() {
-        return "CreateBlogRequest [authorId=" + authorId + ", title=" + title + ", markdown=" + markdown + "]";
+        return "CreateBlogRequest [authorId=" + authorIdentity + ", title=" + title + ", markdown=" + markdown + "]";
     }
     // getters & setters
 }

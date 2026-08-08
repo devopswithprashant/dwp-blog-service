@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.UUID;
 
 
 @Service
@@ -39,14 +40,24 @@ public class BlogService {
     /* ---------------- CREATE ---------------- */
 
     public Long createDraft(Long authorId, String title, String markdown) {
+        return createDraft(authorId == null ? null : authorId.toString(), title, markdown);
+    }
+
+    public Long createDraft(String authorIdentity, String title, String markdown) {
         return blogMetrics.recordTimed("create_draft", () -> {
-            log.debug("Creating draft blog authorId={} titleLength={} markdownLength={}",
-                    authorId,
+            Long resolvedAuthorId = parseAuthorId(authorIdentity);
+            UUID resolvedAuthorUuid = parseAuthorUuid(authorIdentity);
+
+            log.debug("Creating draft blog authorIdentity={} resolvedAuthorId={} resolvedAuthorUuid={} titleLength={} markdownLength={}",
+                    authorIdentity,
+                    resolvedAuthorId,
+                    resolvedAuthorUuid,
                     title == null ? 0 : title.length(),
                     markdown == null ? 0 : markdown.length()
             );
             BlogPost post = new BlogPost();
-            post.setAuthorId(authorId);
+            post.setAuthorId(resolvedAuthorId);
+            post.setAuthorUuid(resolvedAuthorUuid);
             post.setTitle(title);
             post.setSlug(generateSlug(title));
             post.setStatus(PostStatus.DRAFT);
@@ -63,7 +74,7 @@ public class BlogService {
             saveVersion(post.getId(), markdown);
 
             blogMetrics.recordPostCreated();
-            log.info("Draft blog created postId={} authorId={} slug={}", post.getId(), authorId, post.getSlug());
+            log.info("Draft blog created postId={} authorId={} authorUuid={} slug={}", post.getId(), resolvedAuthorId, resolvedAuthorUuid, post.getSlug());
             return post.getId();
         });
     }
@@ -204,6 +215,30 @@ public class BlogService {
     }
 
     /* ---------------- HELPERS ---------------- */
+
+    private Long parseAuthorId(String authorIdentity) {
+        if (authorIdentity == null || authorIdentity.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Long.parseLong(authorIdentity.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private UUID parseAuthorUuid(String authorIdentity) {
+        if (authorIdentity == null || authorIdentity.isBlank()) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(authorIdentity.trim());
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
 
     private void saveVersion(Long postId, String content) {
         int version = versionRepo.findByPostIdOrderByVersionDesc(postId)

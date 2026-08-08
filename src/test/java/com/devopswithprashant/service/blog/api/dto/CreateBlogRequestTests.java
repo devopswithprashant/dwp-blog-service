@@ -4,6 +4,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("CreateBlogRequest DTO Tests")
@@ -64,6 +66,18 @@ class CreateBlogRequestTests {
             CreateBlogRequest request = new CreateBlogRequest();
             request.setAuthorId(202L);
             assertThat(request.getAuthorId()).isEqualTo(202L);
+        }
+
+        @Test
+        @DisplayName("should accept uuid author identity strings")
+        void shouldAcceptUuidAuthorIdentityStrings() {
+            CreateBlogRequest request = new CreateBlogRequest();
+            String uuid = UUID.randomUUID().toString();
+
+            request.setAuthorId(uuid);
+
+            assertThat(request.getAuthorIdentity()).isEqualTo(uuid);
+            assertThat(request.getAuthorId()).isNull();
         }
 
         @Test

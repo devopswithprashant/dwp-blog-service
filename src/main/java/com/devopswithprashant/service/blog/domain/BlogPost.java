@@ -2,6 +2,7 @@ package com.devopswithprashant.service.blog.domain;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "blog_post")
@@ -12,6 +13,9 @@ public class BlogPost {
     private Long id;
 
     private Long authorId;
+
+    @Column(name = "author_uuid")
+    private UUID authorUuid;
 
     private String title;
 
@@ -29,6 +33,19 @@ public class BlogPost {
             Instant updatedAt, Instant publishedAt) {
         this.id = id;
         this.authorId = authorId;
+        this.title = title;
+        this.slug = slug;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.publishedAt = publishedAt;
+    }
+
+    public BlogPost(Long id, Long authorId, UUID authorUuid, String title, String slug, PostStatus status, Instant createdAt,
+            Instant updatedAt, Instant publishedAt) {
+        this.id = id;
+        this.authorId = authorId;
+        this.authorUuid = authorUuid;
         this.title = title;
         this.slug = slug;
         this.status = status;
@@ -60,6 +77,12 @@ public class BlogPost {
     }
     public void setAuthorId(Long authorId) {
         this.authorId = authorId;
+    }
+    public UUID getAuthorUuid() {
+        return authorUuid;
+    }
+    public void setAuthorUuid(UUID authorUuid) {
+        this.authorUuid = authorUuid;
     }
     public String getTitle() {
         return title;

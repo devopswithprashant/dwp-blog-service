@@ -50,31 +50,31 @@ class BlogControllerTests {
         @DisplayName("should return 200 OK with blog ID when creating draft successfully")
         void shouldCreateDraftSuccessfully() {
             CreateBlogRequest request = new CreateBlogRequest(101L, "Test Blog", "# Markdown Content");
-            when(blogService.createDraft(101L, "Test Blog", "# Markdown Content")).thenReturn(1L);
+            when(blogService.createDraft("101", "Test Blog", "# Markdown Content")).thenReturn(1L);
             
             ResponseEntity<Long> response = controller.createDraft(request);
             
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isEqualTo(1L);
-            verify(blogService).createDraft(101L, "Test Blog", "# Markdown Content");
+            verify(blogService).createDraft("101", "Test Blog", "# Markdown Content");
         }
 
         @Test
         @DisplayName("should pass correct parameters from request to service")
         void shouldPassCorrectParametersToService() {
             CreateBlogRequest request = new CreateBlogRequest(202L, "Another Blog", "## Content");
-            when(blogService.createDraft(202L, "Another Blog", "## Content")).thenReturn(2L);
+            when(blogService.createDraft("202", "Another Blog", "## Content")).thenReturn(2L);
             
             controller.createDraft(request);
             
-            verify(blogService).createDraft(202L, "Another Blog", "## Content");
+            verify(blogService).createDraft("202", "Another Blog", "## Content");
         }
 
         @Test
         @DisplayName("should return OK status with numeric ID in response")
         void shouldReturnOkStatusWithNumericId() {
             CreateBlogRequest request = new CreateBlogRequest(303L, "Blog Title", "Content");
-            when(blogService.createDraft(303L, "Blog Title", "Content")).thenReturn(999L);
+            when(blogService.createDraft("303", "Blog Title", "Content")).thenReturn(999L);
             
             ResponseEntity<Long> response = controller.createDraft(request);
             

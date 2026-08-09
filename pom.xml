@@ -18,11 +18,11 @@
 	<distributionManagement>
 		<repository>
 			<id>myreleaserepo</id>
-			<url>http://18.206.175.178:8082/artifactory/myorg-release-local/</url>
+			<url>https://artifacts.devopswithprashant.com/artifactory/myorg-release-local/</url>
 		</repository>
 		<snapshotRepository>
 			<id>mysnapshotrepo</id>
-			<url>http://18.206.175.178:8082/artifactory/myorg-snapshot-local/</url>
+			<url>https://artifacts.devopswithprashant.com/artifactory/myorg-snapshot-local/</url>
 		</snapshotRepository>
 	</distributionManagement>
 
@@ -35,6 +35,16 @@
 
     <properties>
         <java.version>17</java.version>
+		<maven.compiler.source>17</maven.compiler.source>
+    	<maven.compiler.target>17</maven.compiler.target>
+
+		<!-- Sonar properties (can be overridden via CLI or sonar-project.properties) -->
+		<sonar.projectKey>dwp-blog-service</sonar.projectKey>
+		<sonar.projectName>dwp-blog-service</sonar.projectName>
+		<sonar.host.url>https://sonarqube.devopswithprashant.com</sonar.host.url>
+		<!-- Tell Sonar where JaCoCo report lives -->
+		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
     </properties>
 
     <dependencies>
@@ -237,6 +247,13 @@
 					</delimiters>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>4.0.0.4121</version>
+			</plugin>
+
 			<!-- JaCoCo for Code Coverage -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
@@ -257,6 +274,17 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.2.5</version>
+				<configuration>
+					<!-- Needed for JaCoCo agent to work properly with Spring Boot -->
+					<argLine>@{argLine} -Xmx512m</argLine>
+				</configuration>
+			</plugin>
+
+
         </plugins>
 		<resources>
 			<resource>

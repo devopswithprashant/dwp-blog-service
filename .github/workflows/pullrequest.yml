@@ -55,8 +55,6 @@ jobs:
               "password": "${env.ARTIFACTORY_DEV_KEY}"
             }]
 
-    - name: Build
-      run: mvn clean package --file pom.xml -DskipTests -B
 
     - name: Wait for Postgres to be ready
       run: |
@@ -69,11 +67,41 @@ jobs:
       env:
         PGPASSWORD: testpass
 
-    - name: Test
-      run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
+    - name: Build andTest
+      run: mvn clean install -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
       env:
         dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
         dbuser: testuser
         dbpass: testpass
     
+    - name: SonarQube Analysis
+      run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        platforms: linux/amd64,linux/arm64
+        tags: |
+          myapp:${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}
+        # Optional: use GitHub Actions cache for build layers (fast incremental builds)
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Scan Docker image with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'myapp:${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}'
+        format: 'table'
+        exit-code: '1'          # Fails the pipeline if vulnerabilities are found
+        ignore-unfixed: true     # Optional: ignore CVEs without an available fix
+        severity: 'CRITICAL,HIGH'
 

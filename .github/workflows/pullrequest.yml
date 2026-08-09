@@ -67,7 +67,7 @@ jobs:
       env:
         PGPASSWORD: testpass
 
-    - name: Build andTest
+    - name: Build and Test
       run: mvn clean install -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
       env:
         dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
@@ -91,7 +91,7 @@ jobs:
         push: false
         platforms: linux/amd64,linux/arm64
         tags: |
-          myapp:${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}
+          myapp:${{ github.sha }}
         # Optional: use GitHub Actions cache for build layers (fast incremental builds)
         cache-from: type=gha
         cache-to: type=gha,mode=max
@@ -99,7 +99,7 @@ jobs:
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'myapp:${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}'
+        image-ref: 'myapp:${{ github.sha }}'
         format: 'table'
         exit-code: '1'          # Fails the pipeline if vulnerabilities are found
         ignore-unfixed: true     # Optional: ignore CVEs without an available fix

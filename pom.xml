@@ -1,50 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.0</version>
-		<relativePath /> <!-- lookup parent from repository -->
-	</parent>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.11</version>
+        <relativePath /> <!-- lookup parent from repository -->
+    </parent>
 
     <groupId>com.devopswithprashant.service</groupId>
-	<artifactId>blog</artifactId>
-	<version>1.4.2-SNAPSHOT</version>
-	<name>blog</name>
-	<description>Project for backend api of springboot application of a blog website</description>
+    <artifactId>blog</artifactId>
+    <version>1.4.2-SNAPSHOT</version>
+    <name>blog</name>
+    <description>Project for backend api of springboot application of a blog website</description>
 
-	<distributionManagement>
-		<repository>
-			<id>myreleaserepo</id>
-			<url>https://artifacts.devopswithprashant.com/artifactory/myorg-release-local/</url>
-		</repository>
-		<snapshotRepository>
-			<id>mysnapshotrepo</id>
-			<url>https://artifacts.devopswithprashant.com/artifactory/myorg-snapshot-local/</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>myreleaserepo</id>
+            <url>https://artifacts.devopswithprashant.com/artifactory/myorg-release-local/</url>
+        </repository>
+        <snapshotRepository>
+            <id>mysnapshotrepo</id>
+            <url>https://artifacts.devopswithprashant.com/artifactory/myorg-snapshot-local/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
-	<scm>
-		<connection>scm:git:https://github.com/devopswithprashant/dwp-blog-service.git</connection>
-		<developerConnection>scm:git:https://github.com/devopswithprashant/dwp-blog-service.git</developerConnection>
-		<tag>HEAD</tag>
-	</scm>
-
+    <scm>
+        <connection>scm:git:https://github.com/devopswithprashant/dwp-blog-service.git</connection>
+        <developerConnection>scm:git:https://github.com/devopswithprashant/dwp-blog-service.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <java.version>21</java.version>
-		<maven.compiler.source>21</maven.compiler.source>
-    	<maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
-		<!-- Sonar properties (can be overridden via CLI or sonar-project.properties) -->
-		<sonar.projectKey>dwp-blog-service</sonar.projectKey>
-		<sonar.projectName>dwp-blog-service</sonar.projectName>
-		<sonar.host.url>https://sonarqube.devopswithprashant.com</sonar.host.url>
-		<!-- Tell Sonar where JaCoCo report lives -->
-		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Use Spring Boot native property overrides for CVE fixes -->
+        <tomcat.version>10.1.34</tomcat.version>
+        <postgresql.version>42.7.4</postgresql.version>
+        <micrometer.version>1.13.10</micrometer.version>
+        <!-- Align entire Jackson suite safely via BOM override if needed -->
+        <jackson-bom.version>2.17.2</jackson-bom.version>
 
+        <!-- Sonar properties -->
+        <sonar.projectKey>dwp-blog-service</sonar.projectKey>
+        <sonar.projectName>dwp-blog-service</sonar.projectName>
+        <sonar.host.url>https://sonarqube.devopswithprashant.com</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -52,31 +56,31 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-logging</artifactId>
-				</exclusion>
-			</exclusions>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
-		<!-- Log4j2 (replaces default Logback) -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-log4j2</artifactId>
-		</dependency>
+        <!-- Log4j2 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
 
-		<!-- Exposes /actuator/health, /actuator/prometheus etc -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
+        <!-- Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
 
-		<!-- Converts Micrometer metrics to Prometheus text format -->
-		<dependency>
-			<groupId>io.micrometer</groupId>
-			<artifactId>micrometer-registry-prometheus</artifactId>
-		</dependency>
+        <!-- Prometheus Metrics -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
 
         <!-- JPA -->
         <dependency>
@@ -92,16 +96,16 @@
         </dependency>
 
         <!-- Flyway -->
-		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
-			<version>10.20.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-database-postgresql</artifactId>
-			<version>10.20.0</version>
-		</dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>10.20.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <version>10.20.0</version>
+        </dependency>
 
         <!-- Validation -->
         <dependency>
@@ -109,95 +113,89 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-		<!-- Mockito for unit testing -->
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<scope>test</scope>
-		</dependency>
-		
-		<!-- Mockito JUnit Jupiter integration -->
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-junit-jupiter</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <!-- Mockito -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-		<!-- H2 Database for testing -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>test</scope>
-		</dependency>
-		
-		<!-- Testcontainers for integration tests with PostgreSQL -->
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>testcontainers</artifactId>
-			<version>1.19.7</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>1.19.7</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<version>1.19.7</version>
-			<scope>test</scope>
-		</dependency>
+        <!-- H2 for Unit Tests -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+        <!-- Testcontainers -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.19.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.19.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.19.7</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
-	<profiles>
-		<!-- Dev deploy Profile -->
-		<profile>
-			<id>dev</id>
-			<properties>
-				<db.url>jdbc:postgresql://localhost:5432/devblogdb?serverTimezone=UTC</db.url>
-				<db.username>devuser</db.username>
-				<db.password>devuser</db.password>
-			</properties>
-		</profile>
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <db.url>jdbc:postgresql://localhost:5432/devblogdb?serverTimezone=UTC</db.url>
+                <db.username>devuser</db.username>
+                <db.password>devuser</db.password>
+            </properties>
+        </profile>
 
-		<!-- Local Testing Profile -->
-		<profile>
-			<id>test</id>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<properties>
-				<db.url>jdbc:postgresql://localhost:5432/testcaseblogdb?serverTimezone=UTC</db.url>
-				<db.username>testcaseuser</db.username>
-				<db.password>testcaseuser</db.password>
-			</properties>
-		</profile>
+        <profile>
+            <id>test</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <db.url>jdbc:postgresql://localhost:5432/testcaseblogdb?serverTimezone=UTC</db.url>
+                <db.username>testcaseuser</db.username>
+                <db.password>testcaseuser</db.password>
+            </properties>
+        </profile>
 
-		<!-- CI Testing Profile -->
-		<profile>
-			<id>citestcase</id>
-			<properties>
-				<db.url>jdbc:postgresql://nonprod-blog-database-1.c2xkoy8ygth3.us-east-1.rds.amazonaws.com:5432/unittestdb?serverTimezone=UTC</db.url>
-				<db.username>${env.UNITTEST_DB_USER}</db.username>
-				<db.password>${env.UNITTEST_DB_PASS}</db.password>
-			</properties>
-		</profile>
-		
-	</profiles>
+        <profile>
+            <id>citestcase</id>
+            <properties>
+                <db.url>jdbc:postgresql://nonprod-blog-database-1.c2xkoy8ygth3.us-east-1.rds.amazonaws.com:5432/unittestdb?serverTimezone=UTC</db.url>
+                <db.username>${env.UNITTEST_DB_USER}</db.username>
+                <db.password>${env.UNITTEST_DB_PASS}</db.password>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
@@ -205,92 +203,71 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.1.2</version>
-				<configuration>
-					<includes>
-						<include>**/*Test.java</include>
-						<include>**/*Tests.java</include>
-					</includes>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.junit.jupiter</groupId>
-						<artifactId>junit-jupiter-engine</artifactId>
-						<version>5.10.2</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<!-- Integration tests -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.1.2</version>
-				<executions>
-					<execution>
-					<goals>
-						<goal>integration-test</goal>
-						<goal>verify</goal>
-					</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.3.0</version>
-				<configuration>
-					<delimiters>
-					<delimiter>${*}</delimiter>
-					</delimiters>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.sonarsource.scanner.maven</groupId>
-				<artifactId>sonar-maven-plugin</artifactId>
-				<version>4.0.0.4121</version>
-			</plugin>
-
-			<!-- JaCoCo for Code Coverage -->
-			<plugin>
-				<groupId>org.jacoco</groupId>
-				<artifactId>jacoco-maven-plugin</artifactId>
-				<version>0.8.10</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>prepare-agent</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>report</id>
-						<phase>test</phase>
-						<goals>
-							<goal>report</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.2.5</version>
-				<configuration>
-					<!-- Needed for JaCoCo agent to work properly with Spring Boot -->
-					<argLine>@{argLine} -Xmx512m</argLine>
-				</configuration>
-			</plugin>
-
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                    </includes>
+                    <argLine>@{argLine} -Xmx512m</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <delimiters>
+                        <delimiter>${*}</delimiter>
+                    </delimiters>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>4.0.0.4121</version>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.10</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering> 
-			</resource>
-		</resources>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering> 
+            </resource>
+        </resources>
     </build>
 </project>

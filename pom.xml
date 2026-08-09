@@ -37,11 +37,11 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
 
-        <!-- Spring Boot property overrides for CVE fixes -->
-        <!-- Fixed version for Tomcat CVE-2025-24813, CVE-2026-41293, CVE-2026-43512, CVE-2026-43515 -->
+        <!-- Spring Boot property overrides for transitive dependency CVE fixes -->
         <tomcat.version>10.1.55</tomcat.version>
-        <postgresql.version>42.7.4</postgresql.version>
-        <micrometer.version>1.13.10</micrometer.version>
+        <postgresql.version>42.7.12</postgresql.version>
+        <micrometer.version>1.15.12</micrometer.version>
+        <jackson-bom.version>2.18.8</jackson-bom.version>
 
         <!-- Sonar properties -->
         <sonar.projectKey>dwp-blog-service</sonar.projectKey>
@@ -50,8 +50,63 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
+    <!-- Hardened Dependency Management to guarantee clean builds across transitive libraries -->
+    <dependencyManagement>
+        <dependencies>
+            <!-- Tomcat Embed Fixes -->
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-el</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+
+            <!-- Jackson Suite Fixes (Keeps all modules synced to prevent NoClassDefFoundError) -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- PostgreSQL Driver -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+
+            <!-- Micrometer Core -->
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-core</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-commons</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-observation</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-        <!-- Spring Boot -->
+        <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

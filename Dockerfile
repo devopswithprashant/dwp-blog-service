@@ -3,11 +3,11 @@
 # ==========================================
 FROM alpine:3.20 AS jlink-builder
 
-# Install OpenJDK 17 and binutils (provides 'objcopy' required for --strip-debug)
-RUN apk add --no-cache openjdk17-jdk binutils
+# Install OpenJDK 21 and binutils (provides 'objcopy' required for --strip-debug)
+RUN apk add --no-cache openjdk21-jdk binutils
 
 # Build lightweight JRE containing required Spring Boot modules (including java.desktop)
-RUN /usr/lib/jvm/java-17-openjdk/bin/jlink \
+RUN /usr/lib/jvm/java-21-openjdk/bin/jlink \
     --add-modules java.base,java.desktop,java.instrument,java.management,java.naming,java.net.http,java.security.jgss,java.security.sasl,java.sql,java.transaction.xa,java.xml,jdk.unsupported,jdk.crypto.ec \
     --strip-debug \
     --no-man-pages \

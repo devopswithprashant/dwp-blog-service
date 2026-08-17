@@ -90,7 +90,7 @@ jobs:
         file: ./Dockerfile
         push: false
         load: true # Exports the built image to the local Docker daemon
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/arm64
         tags: |
           myapp:${{ github.sha }}
         # Optional: use GitHub Actions cache for build layers (fast incremental builds)

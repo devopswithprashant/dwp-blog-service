@@ -62,7 +62,7 @@ jobs:
     - name: Setup Maven Action
       uses: s4u/setup-maven-action@v1.19.0
       with:
-          java-version: 17
+          java-version: 21
           java-distribution: 'temurin'
           maven-version: 3.9.11
           settings-servers: |
@@ -105,12 +105,15 @@ jobs:
       env:
         PGPASSWORD: testpass
 
-    - name: Test
-      run: mvn clean test -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
+    - name: Testcase 
+      run: mvn clean verify -P citestcase -Ddb.url=$dburl -Ddb.username=$dbuser -Ddb.password=$dbpass
       env:
         dburl: "jdbc:postgresql://localhost:5432/testdb?serverTimezone=UTC"
         dbuser: testuser
         dbpass: testpass
+
+    - name: SonarQube Analysis
+      run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }}
     
     - name: Publish
       run: mvn clean deploy --file pom.xml -DskipTests -B
@@ -160,6 +163,15 @@ jobs:
           # Optional: use GitHub Actions cache for build layers (fast incremental builds)
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Scan Docker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ needs.maven.outputs.projectVersion }}-${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'          # Fails the pipeline if vulnerabilities are found
+          ignore-unfixed: true     # Optional: ignore CVEs without an available fix
+          severity: 'CRITICAL,HIGH'
 
   
   deploy-DEV:

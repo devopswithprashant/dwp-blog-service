@@ -30,6 +30,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 //import java.util.Arrays;
@@ -47,6 +48,8 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BlogServiceTest {
+
+    private static final UUID AUTHOR_UUID = UUID.fromString("96c8bbf1-22b1-49c6-8a0d-e31f9f9df31d");
 
     @Mock
     private BlogPostRepository postRepository;
@@ -99,7 +102,6 @@ class BlogServiceTest {
         @Test
         @DisplayName("should create draft blog with valid parameters")
         void shouldCreateDraftBlog_withValidParameters() {
-            Long authorId = 100L;
             String title = "New Blog Post";
             String markdown = "# Hello World\nThis is content";
 
@@ -107,7 +109,7 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            Long blogId = blogService.createDraft(authorId, title, markdown);
+            Long blogId = blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             assertThat(blogId).isNotNull();
             verify(postRepository).save(any(BlogPost.class));
@@ -118,7 +120,6 @@ class BlogServiceTest {
         @Test
         @DisplayName("should set draft status when creating blog")
         void shouldSetDraftStatus_whenCreatingBlog() {
-            Long authorId = 101L;
             String title = "Draft Article";
             String markdown = "Content";
 
@@ -126,7 +127,7 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            blogService.createDraft(authorId, title, markdown);
+            blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
             verify(postRepository).save(postCaptor.capture());
@@ -134,9 +135,8 @@ class BlogServiceTest {
         }
 
         @Test
-        @DisplayName("should set author id correctly")
-        void shouldSetAuthorIdCorrectly() {
-            Long authorId = 500L;
+        @DisplayName("should associate the authenticated author's UUID")
+        void shouldSetAuthorUuidCorrectly() {
             String title = "Author Blog";
             String markdown = "By author";
 
@@ -144,17 +144,16 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            blogService.createDraft(authorId, title, markdown);
+            blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
             verify(postRepository).save(postCaptor.capture());
-            assertThat(postCaptor.getValue().getAuthorId()).isEqualTo(authorId);
+            assertThat(postCaptor.getValue().getAuthorUuid()).isEqualTo(AUTHOR_UUID);
         }
 
         @Test
-        @DisplayName("should accept uuid author identity strings without failing")
-        void shouldAcceptUuidAuthorIdentityStrings() {
-            String authorId = UUID.randomUUID().toString();
+        @DisplayName("should associate the provided authenticated UUID")
+        void shouldAssociateAuthenticatedUuid() {
             String title = "Uuid Author Blog";
             String markdown = "By uuid author";
 
@@ -162,17 +161,24 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            blogService.createDraft(authorId, title, markdown);
+            blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
             verify(postRepository).save(postCaptor.capture());
-            assertThat(postCaptor.getValue().getAuthorUuid()).isEqualTo(UUID.fromString(authorId));
+            assertThat(postCaptor.getValue().getAuthorUuid()).isEqualTo(AUTHOR_UUID);
+        }
+
+        @Test
+        @DisplayName("should reject draft creation without an authenticated UUID")
+        void shouldRejectMissingAuthorUuid() {
+            assertThatThrownBy(() -> blogService.createDraft(null, "Title", "Content"))
+                    .isInstanceOf(NullPointerException.class);
+            verify(postRepository, never()).save(any(BlogPost.class));
         }
 
         @Test
         @DisplayName("should generate slug from title")
         void shouldGenerateSlugFromTitle() {
-            Long authorId = 102L;
             String title = "Spring Boot Best Practices";
             String markdown = "Content here";
 
@@ -180,7 +186,7 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            blogService.createDraft(authorId, title, markdown);
+            blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
             verify(postRepository).save(postCaptor.capture());
@@ -190,7 +196,6 @@ class BlogServiceTest {
         @Test
         @DisplayName("should save content with markdown format")
         void shouldSaveContentWithMarkdownFormat() {
-            Long authorId = 103L;
             String title = "Markdown Blog";
             String markdown = "# Title\n**Bold**";
 
@@ -198,7 +203,7 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            blogService.createDraft(authorId, title, markdown);
+            blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             ArgumentCaptor<BlogPostContent> contentCaptor = ArgumentCaptor.forClass(BlogPostContent.class);
             verify(contentRepository).save(contentCaptor.capture());
@@ -208,7 +213,6 @@ class BlogServiceTest {
         @Test
         @DisplayName("should create initial version entry")
         void shouldCreateInitialVersionEntry() {
-            Long authorId = 104L;
             String title = "Version Test";
             String markdown = "Version content";
 
@@ -216,7 +220,7 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            blogService.createDraft(authorId, title, markdown);
+            blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             ArgumentCaptor<BlogPostVersion> versionCaptor = ArgumentCaptor.forClass(BlogPostVersion.class);
             verify(versionRepository).save(versionCaptor.capture());
@@ -226,7 +230,6 @@ class BlogServiceTest {
         @Test
         @DisplayName("should set creation timestamp")
         void shouldSetCreationTimestamp() {
-            Long authorId = 105L;
             String title = "Timestamped Blog";
             String markdown = "Timestamped";
 
@@ -234,7 +237,7 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            blogService.createDraft(authorId, title, markdown);
+            blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             ArgumentCaptor<BlogPost> postCaptor = ArgumentCaptor.forClass(BlogPost.class);
             verify(postRepository).save(postCaptor.capture());
@@ -244,7 +247,6 @@ class BlogServiceTest {
         @Test
         @DisplayName("should handle empty markdown content")
         void shouldHandleEmptyMarkdownContent() {
-            Long authorId = 106L;
             String title = "Empty Content Blog";
             String markdown = "";
 
@@ -252,7 +254,7 @@ class BlogServiceTest {
             when(contentRepository.save(any(BlogPostContent.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(versionRepository.findByPostIdOrderByVersionDesc(anyLong())).thenReturn(Collections.emptyList());
 
-            Long blogId = blogService.createDraft(authorId, title, markdown);
+            Long blogId = blogService.createDraft(AUTHOR_UUID, title, markdown);
 
             assertThat(blogId).isNotNull();
             verify(contentRepository).save(any(BlogPostContent.class));
@@ -510,10 +512,35 @@ class BlogServiceTest {
                     .thenReturn(Collections.singletonList(createBlogVersion(blogId, 1)));
             when(versionRepository.save(any(BlogPostVersion.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-            blogService.updateBlog(blogId, request);
+            blogService.updateBlog(blogId, request, AUTHOR_UUID);
 
             assertThat(existingPost.getTitle()).isEqualTo("Updated Title");
             assertThat(existingContent.getContent()).isEqualTo("Updated content");
+        }
+
+        @Test
+        @DisplayName("should deny an update by a different user")
+        void shouldDenyUpdateByAnotherUser() {
+            Long blogId = 10L;
+            BlogPost post = createBlogPost(blogId, "Owned by someone else", PostStatus.DRAFT);
+            post.setAuthorUuid(UUID.randomUUID());
+            when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
+
+            assertThatThrownBy(() -> blogService.updateBlog(blogId, new UpdateBlogRequest("Changed", "Changed"),
+                    AUTHOR_UUID)).isInstanceOf(AccessDeniedException.class);
+            verify(contentRepository, never()).findById(blogId);
+        }
+
+        @Test
+        @DisplayName("should deny updates to legacy posts without an owner")
+        void shouldDenyUpdateToLegacyAnonymousPost() {
+            Long blogId = 11L;
+            BlogPost post = createBlogPost(blogId, "Legacy post", PostStatus.DRAFT);
+            post.setAuthorUuid(null);
+            when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
+
+            assertThatThrownBy(() -> blogService.updateBlog(blogId, new UpdateBlogRequest("Changed", "Changed"),
+                    AUTHOR_UUID)).isInstanceOf(AccessDeniedException.class);
         }
 
         @Test
@@ -526,8 +553,8 @@ class BlogServiceTest {
 
             when(postRepository.findById(blogId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> blogService.updateBlog(blogId, request))
-                    .isInstanceOf(Exception.class);
+            assertThatThrownBy(() -> blogService.updateBlog(blogId, request, AUTHOR_UUID))
+                    .isInstanceOf(BlogNotFoundException.class);
         }
 
         @Test
@@ -547,7 +574,7 @@ class BlogServiceTest {
             when(versionRepository.findByPostIdOrderByVersionDesc(blogId))
                     .thenReturn(Collections.singletonList(createBlogVersion(blogId, 1)));
 
-            blogService.updateBlog(blogId, request);
+            blogService.updateBlog(blogId, request, AUTHOR_UUID);
 
             ArgumentCaptor<BlogPostVersion> versionCaptor = ArgumentCaptor.forClass(BlogPostVersion.class);
             verify(versionRepository).save(versionCaptor.capture());
@@ -571,7 +598,7 @@ class BlogServiceTest {
                     .thenReturn(Collections.singletonList(createBlogVersion(blogId, 1)));
             when(versionRepository.save(any(BlogPostVersion.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-            blogService.updateBlog(blogId, request);
+            blogService.updateBlog(blogId, request, AUTHOR_UUID);
 
             assertThat(existingPost.getSlug()).isNotEmpty();
             verify(versionRepository).save(any(BlogPostVersion.class));
@@ -593,7 +620,7 @@ class BlogServiceTest {
             when(versionRepository.findByPostIdOrderByVersionDesc(blogId))
                     .thenReturn(Collections.singletonList(v1));
 
-            blogService.updateBlog(blogId, request);
+            blogService.updateBlog(blogId, request, AUTHOR_UUID);
 
             ArgumentCaptor<BlogPostVersion> versionCaptor = ArgumentCaptor.forClass(BlogPostVersion.class);
             verify(versionRepository).save(versionCaptor.capture());
@@ -617,7 +644,7 @@ class BlogServiceTest {
                     .thenReturn(Collections.singletonList(createBlogVersion(blogId, 1)));
             when(versionRepository.save(any(BlogPostVersion.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-            blogService.updateBlog(blogId, request);
+            blogService.updateBlog(blogId, request, AUTHOR_UUID);
 
             assertThat(existingPost.getStatus()).isEqualTo(PostStatus.PUBLISHED);
         }
@@ -639,7 +666,7 @@ class BlogServiceTest {
                     .thenReturn(Collections.singletonList(createBlogVersion(blogId, 1)));
             when(versionRepository.save(any(BlogPostVersion.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-            blogService.updateBlog(blogId, request);
+            blogService.updateBlog(blogId, request, AUTHOR_UUID);
 
             assertThat(existingPost.getUpdatedAt()).isNotNull();
         }
@@ -654,48 +681,71 @@ class BlogServiceTest {
         @DisplayName("should delete blog successfully")
         void shouldDeleteBlogSuccessfully() {
             Long blogId = 1L;
+            when(postRepository.findById(blogId))
+                    .thenReturn(Optional.of(createBlogPost(blogId, "Blog", PostStatus.DRAFT)));
 
-            blogService.deleteBlog(blogId);
+            blogService.deleteBlog(blogId, AUTHOR_UUID);
 
-            verify(postRepository).deleteById(blogId);
+            verify(postRepository).delete(any(BlogPost.class));
+        }
+
+        @Test
+        @DisplayName("should deny deletion by a different user")
+        void shouldDenyDeleteByAnotherUser() {
+            Long blogId = 12L;
+            BlogPost post = createBlogPost(blogId, "Someone else's post", PostStatus.DRAFT);
+            post.setAuthorUuid(UUID.randomUUID());
+            when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
+
+            assertThatThrownBy(() -> blogService.deleteBlog(blogId, AUTHOR_UUID))
+                    .isInstanceOf(AccessDeniedException.class);
+            verify(postRepository, never()).delete(any(BlogPost.class));
         }
 
         @Test
         @DisplayName("should delete draft blog")
         void shouldDeleteDraftBlog() {
             Long blogId = 2L;
+            when(postRepository.findById(blogId))
+                    .thenReturn(Optional.of(createBlogPost(blogId, "Draft", PostStatus.DRAFT)));
 
-            blogService.deleteBlog(blogId);
+            blogService.deleteBlog(blogId, AUTHOR_UUID);
 
-            verify(postRepository).deleteById(blogId);
+            verify(postRepository).delete(any(BlogPost.class));
         }
 
         @Test
         @DisplayName("should delete published blog")
         void shouldDeletePublishedBlog() {
             Long blogId = 3L;
+            when(postRepository.findById(blogId))
+                    .thenReturn(Optional.of(createBlogPost(blogId, "Published", PostStatus.PUBLISHED)));
 
-            blogService.deleteBlog(blogId);
+            blogService.deleteBlog(blogId, AUTHOR_UUID);
 
-            verify(postRepository).deleteById(blogId);
+            verify(postRepository).delete(any(BlogPost.class));
         }
 
         @Test
         @DisplayName("should cascade delete related content")
         void shouldCascadeDeleteRelatedContent() {
             Long blogId = 4L;
+            when(postRepository.findById(blogId))
+                    .thenReturn(Optional.of(createBlogPost(blogId, "Blog", PostStatus.DRAFT)));
 
-            blogService.deleteBlog(blogId);
+            blogService.deleteBlog(blogId, AUTHOR_UUID);
 
-            verify(postRepository).deleteById(blogId);
+            verify(postRepository).delete(any(BlogPost.class));
         }
 
         @Test
-        @DisplayName("should handle deletion of already deleted blog")
-        void shouldHandleDeletionOfAlreadyDeletedBlog() {
+        @DisplayName("should return not found when deleting a missing blog")
+        void shouldReturnNotFoundWhenDeletingMissingBlog() {
             Long blogId = 5L;
 
-            assertThatNoException().isThrownBy(() -> blogService.deleteBlog(blogId));
+            when(postRepository.findById(blogId)).thenReturn(Optional.empty());
+            assertThatThrownBy(() -> blogService.deleteBlog(blogId, AUTHOR_UUID))
+                    .isInstanceOf(BlogNotFoundException.class);
         }
     }
 
@@ -865,9 +915,22 @@ class BlogServiceTest {
 
             when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
 
-            blogService.publish(blogId);
+            blogService.publish(blogId, AUTHOR_UUID);
 
             assertThat(post.getStatus()).isEqualTo(PostStatus.PUBLISHED);
+        }
+
+        @Test
+        @DisplayName("should deny publishing by a different user")
+        void shouldDenyPublishByAnotherUser() {
+            Long blogId = 13L;
+            BlogPost post = createBlogPost(blogId, "Someone else's post", PostStatus.DRAFT);
+            post.setAuthorUuid(UUID.randomUUID());
+            when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
+
+            assertThatThrownBy(() -> blogService.publish(blogId, AUTHOR_UUID))
+                    .isInstanceOf(AccessDeniedException.class);
+            assertThat(post.getStatus()).isEqualTo(PostStatus.DRAFT);
         }
 
         @Test
@@ -877,8 +940,8 @@ class BlogServiceTest {
 
             when(postRepository.findById(blogId)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> blogService.publish(blogId))
-                    .isInstanceOf(Exception.class);
+            assertThatThrownBy(() -> blogService.publish(blogId, AUTHOR_UUID))
+                    .isInstanceOf(BlogNotFoundException.class);
         }
 
         @Test
@@ -889,7 +952,7 @@ class BlogServiceTest {
 
             when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
 
-            blogService.publish(blogId);
+            blogService.publish(blogId, AUTHOR_UUID);
 
             assertThat(post.getStatus()).isEqualTo(PostStatus.PUBLISHED);
         }
@@ -902,7 +965,7 @@ class BlogServiceTest {
 
             when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
 
-            blogService.publish(blogId);
+            blogService.publish(blogId, AUTHOR_UUID);
 
             assertThat(post.getPublishedAt()).isNotNull();
         }
@@ -916,7 +979,7 @@ class BlogServiceTest {
 
             when(postRepository.findById(blogId)).thenReturn(Optional.of(post));
 
-            assertThatNoException().isThrownBy(() -> blogService.publish(blogId));
+            assertThatNoException().isThrownBy(() -> blogService.publish(blogId, AUTHOR_UUID));
         }
     }
 
@@ -927,6 +990,7 @@ class BlogServiceTest {
         post.setTitle(title);
         post.setSlug(title.toLowerCase().replace(" ", "-"));
         post.setAuthorId(100L);
+        post.setAuthorUuid(AUTHOR_UUID);
         post.setStatus(status);
         post.setCreatedAt(Instant.now());
         if (status == PostStatus.PUBLISHED) {

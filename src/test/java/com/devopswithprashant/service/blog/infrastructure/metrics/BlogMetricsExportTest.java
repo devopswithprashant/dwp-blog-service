@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "JWT_SECRET=012345678901234567890123456789012345678901234567")
 @AutoConfigureMockMvc
 class BlogMetricsExportTest {
 
@@ -30,7 +30,7 @@ class BlogMetricsExportTest {
     @Test
     void createDraftExportsCreatedAndVersionCountersToPrometheus() throws Exception {
         String title = "metrics-test-" + UUID.randomUUID();
-        blogService.createDraft(1L, title, "# body");
+        blogService.createDraft(UUID.randomUUID(), title, "# body");
 
         assertThat(registry.find("blog.drafts").counter())
                 .isNotNull()

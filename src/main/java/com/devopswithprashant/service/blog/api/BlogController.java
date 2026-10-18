@@ -3,6 +3,9 @@ package com.devopswithprashant.service.blog.api;
 import com.devopswithprashant.service.blog.api.dto.*;
 import com.devopswithprashant.service.blog.application.BlogService;
 import jakarta.validation.Valid;
+import java.util.UUID;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -27,14 +30,14 @@ public class BlogController {
 
     @PostMapping
     public ResponseEntity<Long> createDraft(
-            @Valid @RequestBody CreateBlogRequest request) {
+            @Valid @RequestBody CreateBlogRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
 
-        log.info("Create draft blog requested authorId={} titleLength={}",
-                request.getAuthorId(),
-                request.getTitle() == null ? 0 : request.getTitle().length()
-        );
+        UUID authorUuid = UUID.fromString(jwt.getSubject());
+        log.info("Create draft blog requested titleLength={}",
+                request.getTitle() == null ? 0 : request.getTitle().length());
         Long postId = blogService.createDraft(
-                request.getAuthorIdentity(),
+                authorUuid,
                 request.getTitle(),
                 request.getMarkdown()
         );
@@ -71,14 +74,15 @@ public class BlogController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateBlog(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateBlogRequest request) {
+            @Valid @RequestBody UpdateBlogRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
 
         log.info("Update blog requested postId={} titleLength={} markdownLength={}",
                 id,
                 request.getTitle() == null ? 0 : request.getTitle().length(),
                 request.getMarkdown() == null ? 0 : request.getMarkdown().length()
         );
-        blogService.updateBlog(id, request);
+        blogService.updateBlog(id, request, UUID.fromString(jwt.getSubject()));
         log.info("Update blog succeeded postId={}", id);
         return ResponseEntity.ok().build();
     }
@@ -86,9 +90,9 @@ public class BlogController {
     /* -------- DELETE -------- */
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBlog(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteBlog(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         log.info("Delete blog requested postId={}", id);
-        blogService.deleteBlog(id);
+        blogService.deleteBlog(id, UUID.fromString(jwt.getSubject()));
         log.info("Delete blog succeeded postId={}", id);
         return ResponseEntity.noContent().build();
     }
@@ -96,9 +100,9 @@ public class BlogController {
     /* -------- PUBLISH -------- */
 
     @PostMapping("/{id}/publish")
-    public ResponseEntity<Void> publish(@PathVariable Long id) {
+    public ResponseEntity<Void> publish(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         log.info("Publish blog requested postId={}", id);
-        blogService.publish(id);
+        blogService.publish(id, UUID.fromString(jwt.getSubject()));
         log.info("Publish blog succeeded postId={}", id);
         return ResponseEntity.ok().build();
     }

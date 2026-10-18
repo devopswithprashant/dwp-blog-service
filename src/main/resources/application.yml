@@ -33,6 +33,11 @@ spring:
     baseline-on-migrate: false
     validate-on-migrate: true
 
+security:
+  jwt:
+    issuer: ${JWT_ISSUER:devopswithprashant-auth}
+    audience: ${JWT_AUDIENCE:devopswithprashant-platform}
+
 
 # ───────────── Logging configuration ──────────────────────────────
 logging:

@@ -20,10 +20,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +37,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BlogController Tests")
 class BlogControllerTests {
+
+    private static final UUID AUTHOR_UUID = UUID.fromString("96c8bbf1-22b1-49c6-8a0d-e31f9f9df31d");
 
     @Mock
     private BlogService blogService;
@@ -49,34 +53,34 @@ class BlogControllerTests {
         @Test
         @DisplayName("should return 200 OK with blog ID when creating draft successfully")
         void shouldCreateDraftSuccessfully() {
-            CreateBlogRequest request = new CreateBlogRequest(101L, "Test Blog", "# Markdown Content");
-            when(blogService.createDraft("101", "Test Blog", "# Markdown Content")).thenReturn(1L);
+            CreateBlogRequest request = new CreateBlogRequest("Test Blog", "# Markdown Content");
+            when(blogService.createDraft(AUTHOR_UUID, "Test Blog", "# Markdown Content")).thenReturn(1L);
             
-            ResponseEntity<Long> response = controller.createDraft(request);
+            ResponseEntity<Long> response = controller.createDraft(request, authenticatedUser());
             
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isEqualTo(1L);
-            verify(blogService).createDraft("101", "Test Blog", "# Markdown Content");
+            verify(blogService).createDraft(AUTHOR_UUID, "Test Blog", "# Markdown Content");
         }
 
         @Test
         @DisplayName("should pass correct parameters from request to service")
         void shouldPassCorrectParametersToService() {
-            CreateBlogRequest request = new CreateBlogRequest(202L, "Another Blog", "## Content");
-            when(blogService.createDraft("202", "Another Blog", "## Content")).thenReturn(2L);
+            CreateBlogRequest request = new CreateBlogRequest("Another Blog", "## Content");
+            when(blogService.createDraft(AUTHOR_UUID, "Another Blog", "## Content")).thenReturn(2L);
             
-            controller.createDraft(request);
+            controller.createDraft(request, authenticatedUser());
             
-            verify(blogService).createDraft("202", "Another Blog", "## Content");
+            verify(blogService).createDraft(AUTHOR_UUID, "Another Blog", "## Content");
         }
 
         @Test
         @DisplayName("should return OK status with numeric ID in response")
         void shouldReturnOkStatusWithNumericId() {
-            CreateBlogRequest request = new CreateBlogRequest(303L, "Blog Title", "Content");
-            when(blogService.createDraft("303", "Blog Title", "Content")).thenReturn(999L);
+            CreateBlogRequest request = new CreateBlogRequest("Blog Title", "Content");
+            when(blogService.createDraft(AUTHOR_UUID, "Blog Title", "Content")).thenReturn(999L);
             
-            ResponseEntity<Long> response = controller.createDraft(request);
+            ResponseEntity<Long> response = controller.createDraft(request, authenticatedUser());
             
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(response.getBody()).isInstanceOf(Long.class).isEqualTo(999L);
@@ -238,20 +242,20 @@ class BlogControllerTests {
         void shouldUpdateBlogSuccessfully() {
             UpdateBlogRequest request = new UpdateBlogRequest("Updated Title", "Updated content");
             
-            ResponseEntity<Void> response = controller.updateBlog(1L, request);
+            ResponseEntity<Void> response = controller.updateBlog(1L, request, authenticatedUser());
             
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            verify(blogService).updateBlog(1L, request);
+            verify(blogService).updateBlog(1L, request, AUTHOR_UUID);
         }
 
         @Test
         @DisplayName("should throw BlogNotFoundException when blog to update does not exist")
         void shouldThrowExceptionWhenBlogNotFound() {
             UpdateBlogRequest request = new UpdateBlogRequest("Title", "Content");
-            doThrow(new BlogNotFoundException(999L)).when(blogService).updateBlog(999L, request);
+            doThrow(new BlogNotFoundException(999L)).when(blogService).updateBlog(999L, request, AUTHOR_UUID);
             
             try {
-                controller.updateBlog(999L, request);
+                controller.updateBlog(999L, request, authenticatedUser());
             } catch (BlogNotFoundException e) {
                 assertThat(e).isInstanceOf(BlogNotFoundException.class);
             }
@@ -262,9 +266,9 @@ class BlogControllerTests {
         void shouldPassCorrectUpdateRequest() {
             UpdateBlogRequest request = new UpdateBlogRequest("New Title", "New Markdown");
             
-            controller.updateBlog(5L, request);
+            controller.updateBlog(5L, request, authenticatedUser());
             
-            verify(blogService).updateBlog(5L, request);
+            verify(blogService).updateBlog(5L, request, AUTHOR_UUID);
         }
     }
 
@@ -275,19 +279,19 @@ class BlogControllerTests {
         @Test
         @DisplayName("should return 204 NO_CONTENT when blog is deleted successfully")
         void shouldDeleteBlogSuccessfully() {
-            ResponseEntity<Void> response = controller.deleteBlog(1L);
+            ResponseEntity<Void> response = controller.deleteBlog(1L, authenticatedUser());
             
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-            verify(blogService).deleteBlog(1L);
+            verify(blogService).deleteBlog(1L, AUTHOR_UUID);
         }
 
         @Test
         @DisplayName("should throw BlogNotFoundException when blog to delete does not exist")
         void shouldThrowExceptionWhenBlogNotFound() {
-            doThrow(new BlogNotFoundException(999L)).when(blogService).deleteBlog(999L);
+            doThrow(new BlogNotFoundException(999L)).when(blogService).deleteBlog(999L, AUTHOR_UUID);
             
             try {
-                controller.deleteBlog(999L);
+                controller.deleteBlog(999L, authenticatedUser());
             } catch (BlogNotFoundException e) {
                 assertThat(e).isInstanceOf(BlogNotFoundException.class);
             }
@@ -296,9 +300,9 @@ class BlogControllerTests {
         @Test
         @DisplayName("should call service delete method with correct blog ID")
         void shouldCallServiceDeleteWithCorrectId() {
-            controller.deleteBlog(7L);
+            controller.deleteBlog(7L, authenticatedUser());
             
-            verify(blogService).deleteBlog(7L);
+            verify(blogService).deleteBlog(7L, AUTHOR_UUID);
         }
     }
 
@@ -309,19 +313,19 @@ class BlogControllerTests {
         @Test
         @DisplayName("should return 200 OK when blog is published successfully")
         void shouldPublishBlogSuccessfully() {
-            ResponseEntity<Void> response = controller.publish(1L);
+            ResponseEntity<Void> response = controller.publish(1L, authenticatedUser());
             
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            verify(blogService).publish(1L);
+            verify(blogService).publish(1L, AUTHOR_UUID);
         }
 
         @Test
         @DisplayName("should throw BlogNotFoundException when blog to publish does not exist")
         void shouldThrowExceptionWhenBlogNotFound() {
-            doThrow(new BlogNotFoundException(999L)).when(blogService).publish(999L);
+            doThrow(new BlogNotFoundException(999L)).when(blogService).publish(999L, AUTHOR_UUID);
             
             try {
-                controller.publish(999L);
+                controller.publish(999L, authenticatedUser());
             } catch (BlogNotFoundException e) {
                 assertThat(e).isInstanceOf(BlogNotFoundException.class);
             }
@@ -330,9 +334,18 @@ class BlogControllerTests {
         @Test
         @DisplayName("should call service publish method with correct blog ID")
         void shouldCallServicePublishWithCorrectId() {
-            controller.publish(3L);
+            controller.publish(3L, authenticatedUser());
             
-            verify(blogService).publish(3L);
+            verify(blogService).publish(3L, AUTHOR_UUID);
         }
+    }
+
+    private Jwt authenticatedUser() {
+        return Jwt.withTokenValue("test-token")
+                .header("alg", "HS384")
+                .subject(AUTHOR_UUID.toString())
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(300))
+                .build();
     }
 }

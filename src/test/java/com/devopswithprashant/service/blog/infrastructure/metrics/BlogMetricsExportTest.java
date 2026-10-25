@@ -14,7 +14,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "JWT_SECRET=012345678901234567890123456789012345678901234567")
+@SpringBootTest(properties = {
+        "JWT_SECRET=012345678901234567890123456789012345678901234567",
+        "PROFILE_SERVICE_BASE_URL=http://profile.test"
+})
 @AutoConfigureMockMvc
 class BlogMetricsExportTest {
 

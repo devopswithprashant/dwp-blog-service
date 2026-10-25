@@ -2,6 +2,7 @@ package com.devopswithprashant.service.blog.application;
 
 import com.devopswithprashant.service.blog.api.dto.*;
 import com.devopswithprashant.service.blog.domain.*;
+import com.devopswithprashant.service.blog.infrastructure.client.ProfileServiceClient;
 import com.devopswithprashant.service.blog.infrastructure.repository.*;
 import com.devopswithprashant.service.blog.infrastructure.metrics.BlogMetrics;
 import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
@@ -14,7 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -28,15 +32,18 @@ public class BlogService {
     private final BlogPostContentRepository contentRepo;
     private final BlogPostVersionRepository versionRepo;
     private final BlogMetrics blogMetrics;
+    private final ProfileServiceClient profileServiceClient;
 
     public BlogService(BlogPostRepository postRepo,
                        BlogPostContentRepository contentRepo,
                        BlogPostVersionRepository versionRepo,
-                       BlogMetrics blogMetrics) {
+                       BlogMetrics blogMetrics,
+                       ProfileServiceClient profileServiceClient) {
         this.postRepo = postRepo;
         this.contentRepo = contentRepo;
         this.versionRepo = versionRepo;
         this.blogMetrics = blogMetrics;
+        this.profileServiceClient = profileServiceClient;
     }
 
     /* ---------------- CREATE ---------------- */
@@ -97,17 +104,7 @@ public class BlogService {
             BlogPost post = postRepo.findById(blogId)
                     .orElseThrow(() -> new BlogNotFoundException(blogId));
 
-            BlogMetadataResponse resp = new BlogMetadataResponse();
-            resp.setId(post.getId());
-            resp.setAuthorId(post.getAuthorId());
-            resp.setAuthorUuid(post.getAuthorUuid());
-            resp.setTitle(post.getTitle());
-            resp.setSlug(post.getSlug());
-            resp.setStatus(post.getStatus().name());
-            resp.setCreatedAt(post.getCreatedAt());
-            resp.setPublishedAt(post.getPublishedAt());
-
-            return resp;
+            return toMetadataResponse(post, new HashMap<>());
         });
     }
 
@@ -147,20 +144,29 @@ public class BlogService {
                     pageable.getPageSize(),
                     pageable.getSort()
             );
+            Map<UUID, Optional<AuthorProfileResponse>> pageProfiles = new HashMap<>();
             return postRepo.findAll(pageable)
-                    .map(post -> {
-                        BlogMetadataResponse resp = new BlogMetadataResponse();
-                        resp.setId(post.getId());
-                        resp.setAuthorId(post.getAuthorId());
-                        resp.setAuthorUuid(post.getAuthorUuid());
-                        resp.setTitle(post.getTitle());
-                        resp.setSlug(post.getSlug());
-                        resp.setStatus(post.getStatus().name());
-                        resp.setCreatedAt(post.getCreatedAt());
-                        resp.setPublishedAt(post.getPublishedAt());
-                        return resp;
-                    });
+                    .map(post -> toMetadataResponse(post, pageProfiles));
         });
+    }
+
+    private BlogMetadataResponse toMetadataResponse(
+            BlogPost post,
+            Map<UUID, Optional<AuthorProfileResponse>> pageProfiles) {
+        BlogMetadataResponse response = new BlogMetadataResponse();
+        response.setId(post.getId());
+        response.setAuthorId(post.getAuthorId());
+        response.setAuthorUuid(post.getAuthorUuid());
+        response.setTitle(post.getTitle());
+        response.setSlug(post.getSlug());
+        response.setStatus(post.getStatus().name());
+        response.setCreatedAt(post.getCreatedAt());
+        response.setPublishedAt(post.getPublishedAt());
+        if (post.getAuthorUuid() != null) {
+            pageProfiles.computeIfAbsent(post.getAuthorUuid(), profileServiceClient::getPublicProfile)
+                    .ifPresent(response::setAuthorProfile);
+        }
+        return response;
     }
 
     /* ---------------- UPDATE ---------------- */

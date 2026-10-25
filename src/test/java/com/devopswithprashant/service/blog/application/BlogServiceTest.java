@@ -11,7 +11,9 @@ import com.devopswithprashant.service.blog.infrastructure.repository.BlogPostVer
 import com.devopswithprashant.service.blog.infrastructure.metrics.BlogMetrics;
 import com.devopswithprashant.service.blog.api.dto.BlogContentResponse;
 import com.devopswithprashant.service.blog.api.dto.BlogMetadataResponse;
+import com.devopswithprashant.service.blog.api.dto.AuthorProfileResponse;
 import com.devopswithprashant.service.blog.api.dto.UpdateBlogRequest;
+import com.devopswithprashant.service.blog.infrastructure.client.ProfileServiceClient;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -62,6 +64,9 @@ class BlogServiceTest {
 
     @Mock
     private BlogMetrics blogMetrics;
+
+    @Mock
+    private ProfileServiceClient profileServiceClient;
 
     @InjectMocks
     private BlogService blogService;
@@ -345,6 +350,22 @@ class BlogServiceTest {
             BlogMetadataResponse response = blogService.getMetadata(blogId);
 
             assertThat(response.getAuthorId()).isEqualTo(authorId);
+        }
+
+        @Test
+        @DisplayName("should include public author profile in metadata")
+        void shouldIncludePublicAuthorProfileInMetadata() {
+            BlogPost post = createBlogPost(7L, "Profile Blog", PostStatus.PUBLISHED);
+            AuthorProfileResponse profile = new AuthorProfileResponse(
+                    AUTHOR_UUID, "Ada", "Engineer", "https://images.example.test/ada.png", Instant.now());
+            when(postRepository.findById(7L)).thenReturn(Optional.of(post));
+            when(profileServiceClient.getPublicProfile(AUTHOR_UUID)).thenReturn(Optional.of(profile));
+
+            BlogMetadataResponse response = blogService.getMetadata(7L);
+
+            assertThat(response.getAuthorUuid()).isEqualTo(AUTHOR_UUID);
+            assertThat(response.getAuthorProfile()).isEqualTo(profile);
+            verify(profileServiceClient).getPublicProfile(AUTHOR_UUID);
         }
 
         @Test
@@ -811,6 +832,23 @@ class BlogServiceTest {
             assertThat(response.getStatus()).isEqualTo("DRAFT");
             assertThat(response.getAuthorId()).isEqualTo(123L);
             assertThat(response.getSlug()).isEqualTo("test-blog");
+        }
+
+        @Test
+        @DisplayName("should resolve a repeated author profile once per page")
+        void shouldResolveRepeatedAuthorProfileOncePerPage() {
+            Pageable pageable = PageRequest.of(0, 5);
+            List<BlogPost> posts = List.of(
+                    createBlogPost(1L, "First Blog", PostStatus.PUBLISHED),
+                    createBlogPost(2L, "Second Blog", PostStatus.PUBLISHED),
+                    createBlogPost(3L, "Third Blog", PostStatus.PUBLISHED));
+            when(postRepository.findAll(pageable)).thenReturn(new PageImpl<>(posts, pageable, posts.size()));
+            when(profileServiceClient.getPublicProfile(AUTHOR_UUID)).thenReturn(Optional.empty());
+
+            Page<BlogMetadataResponse> result = blogService.getAllBlogs(pageable);
+
+            assertThat(result.getContent()).hasSize(3);
+            verify(profileServiceClient, times(1)).getPublicProfile(AUTHOR_UUID);
         }
 
         @Test

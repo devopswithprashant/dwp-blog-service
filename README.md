@@ -56,12 +56,36 @@ a UUID `sub`.
 
 Blog creation accepts only blog content; author identity is taken from the
 verified token's `sub`, never from request data. Blog metadata includes
-`authorUuid`, which is the stable User Service identity. Update, delete, and
-publish requests are allowed only when the token subject matches that UUID;
-other users receive `403 Forbidden`, and missing/invalid tokens receive
-`401 Unauthorized`. Existing posts without an `authorUuid` remain readable but
-cannot be managed until ownership is assigned through an explicit trusted
-backfill.
+`authorUuid`, which is the stable Auth identity, and an optional `authorProfile`
+projection loaded from the Profile Service's public
+`GET /api/v1/profiles/{profileId}` endpoint. The projection contains only
+`userId`, `displayName`, `bio`, `avatarUrl`, and `createdAt`. Configure
+`PROFILE_SERVICE_BASE_URL` for the Profile Service origin. This setting must be
+provided for each environment; no service hostname is hardcoded. Lookups use
+bounded timeouts and a bounded cache (maximum 1,000 entries, 10-minute TTL by
+default). Profile `404` and temporary
+service failures omit `authorProfile` without preventing blog metadata from
+loading. Update, delete, and publish requests are allowed only when the token
+subject matches `authorUuid`; other users receive `403 Forbidden`, and
+missing/invalid tokens receive `401 Unauthorized`. Existing posts without an
+`authorUuid` remain readable but cannot be managed until ownership is assigned
+through an explicit trusted backfill.
+
+When Profile Service is unavailable or no profile exists, `authorProfile` is
+`null`; `authorUuid` remains available as the stable author reference. Example:
+
+```json
+{
+  "authorUuid": "8c0c0b42-ff2a-4d68-b90f-3b845ca8106a",
+  "authorProfile": {
+    "userId": "8c0c0b42-ff2a-4d68-b90f-3b845ca8106a",
+    "displayName": "Ada",
+    "bio": "Engineer",
+    "avatarUrl": "https://images.example.test/ada.png",
+    "createdAt": "2026-10-18T12:00:00Z"
+  }
+}
+```
 
 Example authenticated creation body:
 
@@ -130,7 +154,4 @@ POST /api/blogs
 1. Add pagination and sorting for blog listings
 1. Add search and filter functionality
 1. Integrate Swagger UI for API documentation
-
-
-
 

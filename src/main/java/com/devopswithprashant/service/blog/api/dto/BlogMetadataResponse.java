@@ -8,6 +8,7 @@ public class BlogMetadataResponse {
     private Long id;
     private Long authorId;
     private UUID authorUuid;
+    private AuthorProfileResponse authorProfile;
     private String title;
     private String slug;
     private String status;
@@ -30,6 +31,12 @@ public class BlogMetadataResponse {
     }
     public void setAuthorUuid(UUID authorUuid) {
         this.authorUuid = authorUuid;
+    }
+    public AuthorProfileResponse getAuthorProfile() {
+        return authorProfile;
+    }
+    public void setAuthorProfile(AuthorProfileResponse authorProfile) {
+        this.authorProfile = authorProfile;
     }
     public String getTitle() {
         return title;

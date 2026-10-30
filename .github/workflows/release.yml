@@ -33,7 +33,7 @@ env:
   ECR_REPOSITORY: dwp/blog            # <- change to your ECR repository name
   GIT_USER_NAME: "ci-bot"
   GIT_USER_EMAIL: "ci-bot@devopswithprashant.com"
-  GITOPS_BRANCH_NAME: "feat/auth-integration"
+  GITOPS_BRANCH_NAME: "feat/profile-integration"
 
 
 
@@ -77,7 +77,7 @@ jobs:
         ReleaseTagName="v${PROJECT_VERSION}"
         mvn release:clean
         mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=github-actions[bot] -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
-        mvn release:perform -Dusername=github-actions[bot] -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
+        mvn release:perform -Dgoals=install -Dusername=github-actions[bot] -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
 
 
     - name: Upload build artifact (target/)

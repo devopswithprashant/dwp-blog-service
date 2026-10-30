@@ -33,6 +33,19 @@ spring:
     baseline-on-migrate: false
     validate-on-migrate: true
 
+security:
+  jwt:
+    issuer: ${JWT_ISSUER:devopswithprashant-auth}
+    audience: ${JWT_AUDIENCE:devopswithprashant-platform}
+
+profile:
+  service:
+    base-url: ${PROFILE_SERVICE_BASE_URL}
+    connect-timeout: ${PROFILE_SERVICE_CONNECT_TIMEOUT:2s}
+    read-timeout: ${PROFILE_SERVICE_READ_TIMEOUT:3s}
+  cache:
+    maximum-size: ${PROFILE_CACHE_MAXIMUM_SIZE:1000}
+    ttl: ${PROFILE_CACHE_TTL:10m}
 
 # ───────────── Logging configuration ──────────────────────────────
 logging:

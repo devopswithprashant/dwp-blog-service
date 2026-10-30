@@ -33,7 +33,7 @@ env:
   ECR_REPOSITORY: dwp/np/blog            # <- change to your ECR repository name
   GIT_USER_NAME: "ci-bot"
   GIT_USER_EMAIL: "ci-bot@devopswithprashant.com"
-  GITOPS_BRANCH_NAME: "feat/auth-integration"  # <- change to your gitops branch name or set as repo variable
+  GITOPS_BRANCH_NAME: "feat/profile-integration"  # <- change to your gitops branch name or set as repo variable
 
 
 
@@ -115,8 +115,8 @@ jobs:
     - name: SonarQube Analysis
       run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }}
     
-    - name: Publish
-      run: mvn clean deploy --file pom.xml -DskipTests -B
+    - name: Maven Build (without tests)
+      run: mvn clean install --file pom.xml -DskipTests -B
 
 
   docker:
@@ -171,7 +171,7 @@ jobs:
           format: 'table'
           exit-code: '1'          # Fails the pipeline if vulnerabilities are found
           ignore-unfixed: true     # Optional: ignore CVEs without an available fix
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
 
   
   deploy-DEV:

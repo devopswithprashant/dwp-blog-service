@@ -2,9 +2,11 @@ package com.devopswithprashant.service.blog.application;
 
 import com.devopswithprashant.service.blog.api.dto.*;
 import com.devopswithprashant.service.blog.domain.*;
+import com.devopswithprashant.service.blog.infrastructure.client.ProfileServiceClient;
 import com.devopswithprashant.service.blog.infrastructure.repository.*;
 import com.devopswithprashant.service.blog.infrastructure.metrics.BlogMetrics;
 import com.devopswithprashant.service.blog.exception.BlogNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -26,38 +32,32 @@ public class BlogService {
     private final BlogPostContentRepository contentRepo;
     private final BlogPostVersionRepository versionRepo;
     private final BlogMetrics blogMetrics;
+    private final ProfileServiceClient profileServiceClient;
 
     public BlogService(BlogPostRepository postRepo,
                        BlogPostContentRepository contentRepo,
                        BlogPostVersionRepository versionRepo,
-                       BlogMetrics blogMetrics) {
+                       BlogMetrics blogMetrics,
+                       ProfileServiceClient profileServiceClient) {
         this.postRepo = postRepo;
         this.contentRepo = contentRepo;
         this.versionRepo = versionRepo;
         this.blogMetrics = blogMetrics;
+        this.profileServiceClient = profileServiceClient;
     }
 
     /* ---------------- CREATE ---------------- */
 
-    public Long createDraft(Long authorId, String title, String markdown) {
-        return createDraft(authorId == null ? null : authorId.toString(), title, markdown);
-    }
-
-    public Long createDraft(String authorIdentity, String title, String markdown) {
+    public Long createDraft(UUID authorUuid, String title, String markdown) {
+        Objects.requireNonNull(authorUuid, "authorUuid is required");
         return blogMetrics.recordTimed("create_draft", () -> {
-            Long resolvedAuthorId = parseAuthorId(authorIdentity);
-            UUID resolvedAuthorUuid = parseAuthorUuid(authorIdentity);
-
-            log.debug("Creating draft blog authorIdentity={} resolvedAuthorId={} resolvedAuthorUuid={} titleLength={} markdownLength={}",
-                    authorIdentity,
-                    resolvedAuthorId,
-                    resolvedAuthorUuid,
+            log.debug("Creating draft blog authorUuid={} titleLength={} markdownLength={}",
+                    authorUuid,
                     title == null ? 0 : title.length(),
                     markdown == null ? 0 : markdown.length()
             );
             BlogPost post = new BlogPost();
-            post.setAuthorId(resolvedAuthorId);
-            post.setAuthorUuid(resolvedAuthorUuid);
+            post.setAuthorUuid(authorUuid);
             post.setTitle(title);
             post.setSlug(generateSlug(title));
             post.setStatus(PostStatus.DRAFT);
@@ -74,7 +74,7 @@ public class BlogService {
             saveVersion(post.getId(), markdown);
 
             blogMetrics.recordPostCreated();
-            log.info("Draft blog created postId={} authorId={} authorUuid={} slug={}", post.getId(), resolvedAuthorId, resolvedAuthorUuid, post.getSlug());
+            log.info("Draft blog created postId={} authorUuid={} slug={}", post.getId(), authorUuid, post.getSlug());
             return post.getId();
         });
     }
@@ -104,16 +104,7 @@ public class BlogService {
             BlogPost post = postRepo.findById(blogId)
                     .orElseThrow(() -> new BlogNotFoundException(blogId));
 
-            BlogMetadataResponse resp = new BlogMetadataResponse();
-            resp.setId(post.getId());
-            resp.setAuthorId(post.getAuthorId());
-            resp.setTitle(post.getTitle());
-            resp.setSlug(post.getSlug());
-            resp.setStatus(post.getStatus().name());
-            resp.setCreatedAt(post.getCreatedAt());
-            resp.setPublishedAt(post.getPublishedAt());
-
-            return resp;
+            return toMetadataResponse(post, new HashMap<>());
         });
     }
 
@@ -153,31 +144,41 @@ public class BlogService {
                     pageable.getPageSize(),
                     pageable.getSort()
             );
+            Map<UUID, Optional<AuthorProfileResponse>> pageProfiles = new HashMap<>();
             return postRepo.findAll(pageable)
-                    .map(post -> {
-                        BlogMetadataResponse resp = new BlogMetadataResponse();
-                        resp.setId(post.getId());
-                        resp.setAuthorId(post.getAuthorId());
-                        resp.setTitle(post.getTitle());
-                        resp.setSlug(post.getSlug());
-                        resp.setStatus(post.getStatus().name());
-                        resp.setCreatedAt(post.getCreatedAt());
-                        resp.setPublishedAt(post.getPublishedAt());
-                        return resp;
-                    });
+                    .map(post -> toMetadataResponse(post, pageProfiles));
         });
+    }
+
+    private BlogMetadataResponse toMetadataResponse(
+            BlogPost post,
+            Map<UUID, Optional<AuthorProfileResponse>> pageProfiles) {
+        BlogMetadataResponse response = new BlogMetadataResponse();
+        response.setId(post.getId());
+        response.setAuthorId(post.getAuthorId());
+        response.setAuthorUuid(post.getAuthorUuid());
+        response.setTitle(post.getTitle());
+        response.setSlug(post.getSlug());
+        response.setStatus(post.getStatus().name());
+        response.setCreatedAt(post.getCreatedAt());
+        response.setPublishedAt(post.getPublishedAt());
+        if (post.getAuthorUuid() != null) {
+            pageProfiles.computeIfAbsent(post.getAuthorUuid(), profileServiceClient::getPublicProfile)
+                    .ifPresent(response::setAuthorProfile);
+        }
+        return response;
     }
 
     /* ---------------- UPDATE ---------------- */
 
-    public void updateBlog(Long blogId, UpdateBlogRequest request) {
+    public void updateBlog(Long blogId, UpdateBlogRequest request, UUID authorUuid) {
         blogMetrics.recordTimed("update_blog", () -> {
             log.debug("Updating blog postId={} titleLength={} markdownLength={}",
                     blogId,
                     request.getTitle() == null ? 0 : request.getTitle().length(),
                     request.getMarkdown() == null ? 0 : request.getMarkdown().length()
             );
-            BlogPost post = postRepo.findById(blogId).orElseThrow();
+            BlogPost post = findOwnedPost(blogId, authorUuid);
             post.setTitle(request.getTitle());
             post.setSlug(generateSlug(request.getTitle()));
             post.setUpdatedAt(Instant.now());
@@ -193,20 +194,20 @@ public class BlogService {
 
     /* ---------------- DELETE ---------------- */
 
-    public void deleteBlog(Long blogId) {
+    public void deleteBlog(Long blogId, UUID authorUuid) {
         blogMetrics.recordTimed("delete_blog", () -> {
             log.info("Deleting blog postId={}", blogId);
-            postRepo.deleteById(blogId); // CASCADE deletes content & versions
+            postRepo.delete(findOwnedPost(blogId, authorUuid)); // CASCADE deletes content & versions
             blogMetrics.recordPostDeleted();
         });
     }
 
     /* ---------------- PUBLISH ---------------- */
 
-    public void publish(Long postId) {
+    public void publish(Long postId, UUID authorUuid) {
         blogMetrics.recordTimed("publish_blog", () -> {
             log.info("Publishing blog postId={}", postId);
-            BlogPost post = postRepo.findById(postId).orElseThrow();
+            BlogPost post = findOwnedPost(postId, authorUuid);
             post.setStatus(PostStatus.PUBLISHED);
             post.setPublishedAt(Instant.now());
             blogMetrics.recordPostPublished();
@@ -216,28 +217,13 @@ public class BlogService {
 
     /* ---------------- HELPERS ---------------- */
 
-    private Long parseAuthorId(String authorIdentity) {
-        if (authorIdentity == null || authorIdentity.isBlank()) {
-            return null;
+    private BlogPost findOwnedPost(Long blogId, UUID authorUuid) {
+        BlogPost post = postRepo.findById(blogId)
+                .orElseThrow(() -> new BlogNotFoundException(blogId));
+        if (post.getAuthorUuid() == null || !post.getAuthorUuid().equals(authorUuid)) {
+            throw new AccessDeniedException("You are not allowed to manage this blog");
         }
-
-        try {
-            return Long.parseLong(authorIdentity.trim());
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
-    }
-
-    private UUID parseAuthorUuid(String authorIdentity) {
-        if (authorIdentity == null || authorIdentity.isBlank()) {
-            return null;
-        }
-
-        try {
-            return UUID.fromString(authorIdentity.trim());
-        } catch (IllegalArgumentException ignored) {
-            return null;
-        }
+        return post;
     }
 
     private void saveVersion(Long postId, String content) {

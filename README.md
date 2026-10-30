@@ -33,16 +33,70 @@ This project is a Spring Boot-based RESTful API designed to perform CRUD (Create
 
 ## API Endpoints
 
-| Method	  |  Endpoint	  |         Description        |
-|-------------|---------------|-----------------------------|
-| GET	      | /api/blogs	  | Fetch all blog posts        |
-| GET	      | /api/blogs/{id}  |	Fetch a specific blog post by ID    |
-| POST        |	/api/blogs  |	Create a new blog post     |
-| PUT	      | /api/blogs/{id} |	Update an existing blog post        |
-| DELETE      |	/api/blogs/{id} |	Delete a blog post by ID       |
+| Method	  |  Endpoint	  | Authentication | Description |
+|-------------|---------------|----------------|-------------|
+| GET	      | /api/blogs	  | Public | Fetch paginated blog posts |
+| GET	      | /api/blogs/{id}/metadata | Public | Fetch blog metadata |
+| GET	      | /api/blogs/{id}/content | Public | Fetch blog content |
+| POST        |	/api/blogs  | Bearer JWT required | Create a draft owned by the authenticated user |
+| PUT	      | /api/blogs/{id} | Owner's bearer JWT required | Update an owned blog |
+| DELETE      |	/api/blogs/{id} | Owner's bearer JWT required | Delete an owned blog |
+| POST        | /api/blogs/{id}/publish | Owner's bearer JWT required | Publish an owned blog |
 
 Note: The CORS configuration allows requests from frontend applications hosted on a different origin.
 
+## Authentication and blog ownership
+
+The service validates Auth Service access tokens directly. Configure `JWT_SECRET`
+with the same HS384 signing secret used by Auth Service (at least 48 UTF-8 bytes).
+The expected issuer and audience default to `devopswithprashant-auth` and
+`devopswithprashant-platform`; override them with `JWT_ISSUER` and `JWT_AUDIENCE`
+only when the platform contract differs. The token must have a valid expiry and
+a UUID `sub`.
+
+Blog creation accepts only blog content; author identity is taken from the
+verified token's `sub`, never from request data. Blog metadata includes
+`authorUuid`, which is the stable Auth identity, and an optional `authorProfile`
+projection loaded from the Profile Service's public
+`GET /api/v1/profiles/{profileId}` endpoint. The projection contains only
+`userId`, `displayName`, `bio`, `avatarUrl`, and `createdAt`. Configure
+`PROFILE_SERVICE_BASE_URL` for the Profile Service origin. This setting must be
+provided for each environment; no service hostname is hardcoded. Lookups use
+bounded timeouts and a bounded cache (maximum 1,000 entries, 10-minute TTL by
+default). Profile `404` and temporary
+service failures omit `authorProfile` without preventing blog metadata from
+loading. Update, delete, and publish requests are allowed only when the token
+subject matches `authorUuid`; other users receive `403 Forbidden`, and
+missing/invalid tokens receive `401 Unauthorized`. Existing posts without an
+`authorUuid` remain readable but cannot be managed until ownership is assigned
+through an explicit trusted backfill.
+
+When Profile Service is unavailable or no profile exists, `authorProfile` is
+`null`; `authorUuid` remains available as the stable author reference. Example:
+
+```json
+{
+  "authorUuid": "8c0c0b42-ff2a-4d68-b90f-3b845ca8106a",
+  "authorProfile": {
+    "userId": "8c0c0b42-ff2a-4d68-b90f-3b845ca8106a",
+    "displayName": "Ada",
+    "bio": "Engineer",
+    "avatarUrl": "https://images.example.test/ada.png",
+    "createdAt": "2026-10-18T12:00:00Z"
+  }
+}
+```
+
+Example authenticated creation body:
+
+```json
+{
+  "title": "My First Blog Post",
+  "markdown": "This is an introductory post."
+}
+```
+
+Send the Auth Service access token as `Authorization: Bearer <token>`.
 
 
 ## Data Model
@@ -53,7 +107,7 @@ Entity: Blog
   "id": Long,
   "title": String,
   "content": String,
-  "author": String,
+  "authorUuid": "UUID",
   "publishDate": LocalDateTime,
   "lastModifiedDate": LocalDateTime
 }
@@ -90,10 +144,7 @@ POST /api/blogs
 ```json
 {
   "title": "My First Blog Post",
-  "content": "This is an introductory post about Spring Boot.",
-  "author": "Prashant",
-  "publishDate": "2025-10-06T20:00:00",
-  "lastModifiedDate": "2025-10-06T20:00:00"
+  "markdown": "This is an introductory post about Spring Boot."
 }
 ```
 
@@ -101,12 +152,6 @@ POST /api/blogs
 
 ## Future Enhancements 
 1. Add pagination and sorting for blog listings
-1. Implement user authentication (JWT/Spring Security)
 1. Add search and filter functionality
 1. Integrate Swagger UI for API documentation
-
-
-
-
-
 

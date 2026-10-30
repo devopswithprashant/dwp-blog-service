@@ -96,8 +96,8 @@ jobs:
         tags: |
           myapp:${{ github.sha }}
         # Optional: use GitHub Actions cache for build layers (fast incremental builds)
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        #cache-from: type=gha
+        #cache-to: type=gha,mode=max
 
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@v0.36.0

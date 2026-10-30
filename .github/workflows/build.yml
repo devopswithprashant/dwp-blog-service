@@ -116,7 +116,7 @@ jobs:
       run: mvn sonar:sonar -Dsonar.login=${{ secrets.SONAR_TOKEN }}
     
     - name: Publish
-      run: mvn clean deploy --file pom.xml -DskipTests -B
+      run: mvn clean install --file pom.xml -DskipTests -B
 
 
   docker:

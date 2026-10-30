@@ -77,7 +77,7 @@ jobs:
         ReleaseTagName="v${PROJECT_VERSION}"
         mvn release:clean
         mvn release:prepare -DreleaseVersion=${PROJECT_VERSION} -Dtag=${ReleaseTagName} -Dusername=github-actions[bot] -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
-        mvn release:perform -Dusername=github-actions[bot] -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
+        mvn release:perform -Dgoals=install -Dusername=github-actions[bot] -Dpassword=${GITHUB_TOKEN} -Darguments=-DskipTests -B -U
 
 
     - name: Upload build artifact (target/)

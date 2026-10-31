@@ -17,18 +17,22 @@ import com.devopswithprashant.service.blog.application.BlogService;
 import com.devopswithprashant.service.blog.infrastructure.metrics.BlogMetrics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = BlogController.class, properties = {
         "JWT_SECRET=012345678901234567890123456789012345678901234567"
 })
+@ImportAutoConfiguration({SecurityAutoConfiguration.class, ServletWebSecurityAutoConfiguration.class})
 @Import(SecurityConfig.class)
 class BlogSecurityTests {
 
@@ -37,10 +41,10 @@ class BlogSecurityTests {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private BlogService blogService;
 
-    @MockBean
+    @MockitoBean
     private BlogMetrics blogMetrics;
 
     @Test
